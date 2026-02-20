@@ -23,8 +23,8 @@ const Species = () => {
   return (
     <>
       <Head>
-        <title>{`${name} | Cozumon | Cozumel Taxonomy`}</title>
-        <meta name="description" content={`${name} | Cozumon | Cozumel Taxonomy`} />
+        <title>{`${name} | Cozumel Taxonomy`}</title>
+        <meta name="description" content={`${name} | Cozumel Taxonomy`} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 

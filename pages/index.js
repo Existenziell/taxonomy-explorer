@@ -12,7 +12,7 @@ import { AdjustmentsVerticalIcon, ArrowDownOnSquareIcon } from '@heroicons/react
 import Filters from '../components/Filters'
 import Search from '../components/Search'
 
-const Cozumon = () => {
+const CozumelTaxonomy = () => {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -117,4 +117,4 @@ const Cozumon = () => {
   )
 }
 
-export default Cozumon
+export default CozumelTaxonomy

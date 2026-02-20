@@ -4,14 +4,14 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import Head from 'next/head'
 import Layout from '../components/_Layout'
 
-function Cozumon({ Component, pageProps }) {
+function CozumelTaxonomy({ Component, pageProps }) {
   const queryClient = new QueryClient()
 
   return (
     <QueryClientProvider client={queryClient}>
       <Head>
-        <title>Cozumon | Cozumel Taxonomy</title>
-        <meta name="description" content="Cozumon | Cozumel Taxonomy" />
+        <title>Cozumel Taxonomy</title>
+        <meta name="description" content="Cozumel Taxonomy" />
         <link rel='icon' href='/favicon/favicon.ico' />
         <link rel='apple-touch-icon' sizes='180x180' href='/favicon/apple-touch-icon.png' />
         <link rel='icon' type='image/png' sizes='32x32' href='/favicon/favicon-32x32.png' />
@@ -26,4 +26,4 @@ function Cozumon({ Component, pageProps }) {
   )
 }
 
-export default Cozumon
+export default CozumelTaxonomy
