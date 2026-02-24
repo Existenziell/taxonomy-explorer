@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "generate:theme": "node scripts/generate-theme-css.js",
-    "prebuild": "npm run generate:theme",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "prebuild": "npm run generate:theme",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "all": "concurrently \"npm run lint\" \"npm run test\" \"npm run build\""
+    "all": "concurrently \"npm run lint\" \"npm run test\" \"npm run build\"",
+    "generate:theme": "node scripts/generate-theme-css.js"
+
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",
@@ -25,7 +26,6 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
-    "@heroicons/react": "^2.1.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.3.0",
@@ -38,7 +38,6 @@
     "concurrently": "^9.1.0",
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.0",
-    "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react": "^7.37.0",
     "jsdom": "^28.1.0",
