@@ -1,21 +1,6 @@
 /* --------------------------------------------------------
 Style Sheet for Cozumel Taxonomy
-
-version: 0.9
-last modified: 3.11.2022 by Christof Bauer
-author: Christof Bauer
-email: bauer.christof@gmail.com
 ----------------------------------------------------------*/
-
-@import url("https://fonts.googleapis.com/css?family=Gotu&display=swap");
-
-:root {
-  --color-brand: #DBDBDB;
-  --color-brand-dark: #242424;
-  --color-cta: #207068;
-  --color-grey: #CFCFCF;
-  --color-grey-dark: #323232;
-}
 
 @tailwind base;
 @tailwind components;

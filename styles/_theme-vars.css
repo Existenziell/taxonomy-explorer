@@ -1,0 +1,52 @@
+/* Generated from lib/theme.js – do not edit */
+:root {
+  --color-cta: #D6A269;
+  --color-brand: #fdfcfd;
+  --color-brand-dark: #2d2b30;
+  --color-grey: #e3dfe6;
+  --color-grey-dark: #8b8792;
+  --color-level-1: #fdfcfd;
+  --color-level-2: #faf9fb;
+  --color-level-3: #f6f4f8;
+  --color-level-4: #e3dfe6;
+  --color-level-5: #6e6a75;
+  --color-level-6: #2d2b30;
+  --color-mauve-1: #fdfcfd;
+  --color-mauve-2: #faf9fb;
+  --color-mauve-3: #f6f4f8;
+  --color-mauve-4: #f0eef3;
+  --color-mauve-5: #eae7ed;
+  --color-mauve-6: #e3dfe6;
+  --color-mauve-7: #ddd8e0;
+  --color-mauve-8: #d2cdd7;
+  --color-mauve-9: #c4bfc9;
+  --color-mauve-10: #a8a3ae;
+  --color-mauve-11: #6e6a75;
+  --color-mauve-12: #2d2b30;
+}
+
+.dark {
+  --color-cta: #D6A269;
+  --color-brand: #1c1b1f;
+  --color-brand-dark: #e6e1e9;
+  --color-grey: #8b8792;
+  --color-grey-dark: #8b8792;
+  --color-level-1: #1c1b1f;
+  --color-level-2: #232225;
+  --color-level-3: #2a282d;
+  --color-level-4: #8b8792;
+  --color-level-5: #b5b0bc;
+  --color-level-6: #e6e1e9;
+  --color-mauve-1: #1c1b1f;
+  --color-mauve-2: #232225;
+  --color-mauve-3: #2a282d;
+  --color-mauve-4: #312f34;
+  --color-mauve-5: #38363c;
+  --color-mauve-6: #403d44;
+  --color-mauve-7: #48454c;
+  --color-mauve-8: #504d55;
+  --color-mauve-9: #5f5c66;
+  --color-mauve-10: #8b8792;
+  --color-mauve-11: #b5b0bc;
+  --color-mauve-12: #e6e1e9;
+}
