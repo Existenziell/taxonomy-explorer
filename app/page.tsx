@@ -4,78 +4,139 @@ import Image from '@/components/Image'
 import AppLink from '@/components/AppLink'
 import translateStatusName from '@/lib/translateStatusName'
 import downloadCsv from '@/lib/downloadCsv'
-import scrollToTop from '@/lib/scrollToTop'
 import Pagination from '@/components/Pagination'
-import { useState } from 'react'
+import { useState, useCallback, useMemo, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import useScrollToTop from '@/hooks/useScrollToTop'
 import { useQuery } from '@tanstack/react-query'
 import fetchApi from '@/lib/fetchApi'
 import { SyncLoader } from 'react-spinners'
-import { ToolsIcon, DownloadIcon, ChevronUp } from '@/components/Icons'
+import { DownloadIcon } from '@/components/Icons'
+import Arrow from '@/components/Arrow'
 import Filters from '@/components/Filters'
 import Search from '@/components/Search'
-import type { SpeciesCountsResponse } from '@/types'
+import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult } from '@/types'
+import {
+  DEFAULT_PER_PAGE,
+  MIN_SEARCH_LENGTH,
+  SPECIES_COUNTS_BASE_URL,
+  SCROLL_TO_TOP_THRESHOLD,
+  DEFAULT_PLACE_ID,
+  DEFAULT_PLACE_DISPLAY_NAME,
+  FALLBACK_REGIONS,
+  PLACE_ID_PARAM,
+  INATURALIST_PLACES_BY_ID,
+} from '@/lib/constants'
 
-export default function HomePage () {
+function getPlaceDisplayName (placeId: number): string {
+  if (placeId === DEFAULT_PLACE_ID) return DEFAULT_PLACE_DISPLAY_NAME
+  return FALLBACK_REGIONS.find((r) => r.id === placeId)?.name ?? `Place ${placeId}`
+}
+
+function HomePageContent () {
+  const searchParams = useSearchParams()
+  const placeIdFromUrl = searchParams.get(PLACE_ID_PARAM)
+  const initialPlaceId = placeIdFromUrl != null ? parseInt(placeIdFromUrl, 10) : DEFAULT_PLACE_ID
+  const validPlaceId = Number.isInteger(initialPlaceId) && initialPlaceId > 0 ? initialPlaceId : DEFAULT_PLACE_ID
+
+  const [placeId, setPlaceIdState] = useState(validPlaceId)
+  const [placeDisplayName, setPlaceDisplayName] = useState(() => getPlaceDisplayName(validPlaceId))
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
   const [filterSpeciesClass, setFilterSpeciesClass] = useState('')
   const [filterEndemic, setFilterEndemic] = useState(false)
-  const { showButton: showScrollToTop } = useScrollToTop(800)
+  const [orderBy, setOrderBy] = useState<OrderByOption>('count_desc')
+  const { showButton: showScrollToTop, scrollToTop } = useScrollToTop(SCROLL_TO_TOP_THRESHOLD)
 
-  const url = 'https://api.inaturalist.org/v1/observations/species_counts?place_id=37612&locale=en'
+  const setPlace = useCallback((id: number, displayName: string) => {
+    setPlaceIdState(id)
+    setPlaceDisplayName(displayName)
+    const url = new URL(window.location.href)
+    url.searchParams.set(PLACE_ID_PARAM, String(id))
+    window.history.replaceState(null, '', url.toString())
+  }, [])
+
+  useEffect(() => {
+    if (placeDisplayName !== `Place ${placeId}`) return
+    let cancelled = false
+    fetch(`${INATURALIST_PLACES_BY_ID}/${placeId}`)
+      .then((res) => res.json() as Promise<PlaceByIdResult>)
+      .then((data) => {
+        if (cancelled) return
+        const first = data?.results?.[0]
+        const name = first?.display_name ?? first?.name
+        if (name) setPlaceDisplayName(name)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [placeId, placeDisplayName])
+
+  const effectiveSearch = search.length >= MIN_SEARCH_LENGTH ? search : ''
+
+  const speciesCountsUrl = useMemo(() => {
+    const base = `${SPECIES_COUNTS_BASE_URL}?place_id=${placeId}&locale=en`
+    const params = `page=${page}&per_page=${DEFAULT_PER_PAGE}&endemic=${filterEndemic}&iconic_taxa=${filterSpeciesClass}`
+    return effectiveSearch.length > 0
+      ? `${base}&${params}&q=${encodeURIComponent(effectiveSearch)}`
+      : `${base}&${params}`
+  }, [placeId, page, filterEndemic, filterSpeciesClass, effectiveSearch])
+
   const { status, data } = useQuery<SpeciesCountsResponse>({
-    queryKey: ['species', page, search, filterEndemic, filterSpeciesClass],
-    queryFn: () =>
-      fetchApi<SpeciesCountsResponse>(
-        search.length > 0
-          ? `${url}&page=${page}&endemic=${filterEndemic.toString()}&iconic_taxa=${filterSpeciesClass}&q=${search}`
-          : `${url}&page=${page}&endemic=${filterEndemic.toString()}&iconic_taxa=${filterSpeciesClass}`
-      ),
+    queryKey: ['species', placeId, page, effectiveSearch, filterEndemic, filterSpeciesClass],
+    queryFn: () => fetchApi<SpeciesCountsResponse>(speciesCountsUrl),
   })
 
   const numberOfPages =
     data?.per_page != null ? Math.ceil(data.total_results / data.per_page) : 0
 
+  const sortedResults = useMemo((): SpeciesCountResult[] | undefined => {
+    const results = data?.results
+    if (results == null) return undefined
+    if (orderBy === 'count_desc') return results
+    const sorted = [...results]
+    if (orderBy === 'count_asc') {
+      sorted.sort((a, b) => a.count - b.count)
+    } else {
+      sorted.sort((a, b) => {
+        const nameA = (a.taxon.preferred_common_name ?? a.taxon.name ?? '').toLowerCase()
+        const nameB = (b.taxon.preferred_common_name ?? b.taxon.name ?? '').toLowerCase()
+        const cmp = nameA.localeCompare(nameB)
+        return orderBy === 'name_asc' ? cmp : -cmp
+      })
+    }
+    return sorted
+  }, [data?.results, orderBy])
+
   if (status === 'error') return <p>{status}</p>
 
   return (
     <>
-      <h1 className="text-4xl mb-8 text-center">Cozumel Taxonomy</h1>
+      <h1 className="title title-hero">Taxonomy Explorer</h1>
       <div className="flex flex-col items-center w-full pb-16">
-        <h2 className="text-center max-w-xl mb-6">
-          The following list shows all species that have been observed on Cozumel and is ordered by the number of these observations.
-        </h2>
-
-        <div className="flex justify-between w-full mb-4">
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1 w-max hover:text-cta"
-          >
-            <ToolsIcon className="w-6 h-6" />
-          </button>
+        <div className="toolbar mb-4">
           <Search search={search} setSearch={setSearch} />
           <button
             type="button"
             onClick={() => {
-              if (data?.results != null) downloadCsv(data.results)
+              if (sortedResults != null) downloadCsv(sortedResults)
             }}
-            className="flex items-center gap-1 w-max hover:text-cta"
+            className="action-button"
           >
             <DownloadIcon className="w-6 h-6" />
           </button>
         </div>
 
-        {showFilters && (
-          <Filters
-            filterEndemic={filterEndemic}
-            setFilterEndemic={setFilterEndemic}
-            filterSpeciesClass={filterSpeciesClass}
-            setFilterSpeciesClass={setFilterSpeciesClass}
-          />
-        )}
+        <Filters
+          placeId={placeId}
+          placeDisplayName={placeDisplayName}
+          onPlaceSelect={setPlace}
+          orderBy={orderBy}
+          setOrderBy={setOrderBy}
+          filterEndemic={filterEndemic}
+          setFilterEndemic={setFilterEndemic}
+          filterSpeciesClass={filterSpeciesClass}
+          setFilterSpeciesClass={setFilterSpeciesClass}
+        />
 
         {status === 'pending'
           ? (
@@ -85,15 +146,19 @@ export default function HomePage () {
             )
           : (
             <>
+              <p className="text-xl text-secondary mt-2 mb-2">
+                {data != null && !('error' in data) && data.total_results != null
+                  ? `${data.total_results.toLocaleString()} species`
+                  : '0 species'}
+              </p>
               <Pagination
-                data={data?.results}
                 page={page}
                 setPage={setPage}
-                totalResults={data?.total_results}
+                totalResults={data != null && 'error' in data ? 0 : data?.total_results}
                 numberOfPages={numberOfPages}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
-                {data?.results?.map((s) => {
+                {sortedResults?.map((s) => {
                   const {
                     id,
                     name,
@@ -107,28 +172,27 @@ export default function HomePage () {
                     <AppLink
                       href={`/species/${id}`}
                       key={`${id}-${name}-${preferred_common_name ?? ''}`}
-                      className="bg-grey dark:bg-grey-dark p-6 cursor-pointer hover:shadow-lg transition-all w-full rounded flex flex-col justify-between"
+                      className="card cursor-pointer hover:shadow-lg w-full flex flex-col justify-between"
                     >
                       {default_photo?.medium_url != null
                         ? (
                             <Image
                               src={default_photo.medium_url}
                               alt={preferred_common_name ?? name}
-                              width={default_photo.original_dimensions?.width ?? 400}
-                              height={default_photo.original_dimensions?.height ?? 300}
+                              fill
                               blurDataURL={default_photo.medium_url}
-                              wrapperClassName="mb-4"
-                              className="shadow rounded w-full h-auto"
+                              wrapperClassName="mb-4 w-full aspect-[4/3] rounded bg-level-4 overflow-hidden relative"
+                              className="object-cover"
                             />
                           )
                         : (
-                            <div className="w-24 h-24 text-sm flex items-center justify-center">No image</div>
+                            <div className="placeholder-image">No image</div>
                           )}
                       <div className="text-sm">
-                        <h2 className="text-lg font-bold mb-4 capitalize">
+                        <h2 className="card-title">
                           {preferred_common_name ?? 'No common name available'}
                         </h2>
-                        <p>Latin Name: {name}</p>
+                        <p>Scientific Name: {name}</p>
                         <p>Taxonomy: {iconic_taxon_name}</p>
                         <p>Number of observations: {s.count}</p>
                         <p>
@@ -144,24 +208,33 @@ export default function HomePage () {
                 })}
               </div>
               <Pagination
-                data={data?.results}
                 page={page}
                 setPage={setPage}
+                totalResults={data != null && 'error' in data ? 0 : data?.total_results}
                 numberOfPages={numberOfPages}
+                showNoResultsMessage={false}
               />
             </>
             )}
 
         {showScrollToTop && (
-          <button
-            type="button"
-            onClick={scrollToTop}
-            className="fixed bottom-2 right-2 z-10 cursor-pointer p-2 hover:bg-cta hover:text-white transition-all rounded-sm"
-          >
-            <ChevronUp className="h-6 w-6" />
-          </button>
+          <div className="flex justify-center mt-16">
+            <Arrow direction="up" onClick={scrollToTop} ariaLabel="Scroll to top" />
+          </div>
         )}
       </div>
     </>
+  )
+}
+
+export default function HomePage () {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center w-full pb-16 mt-8">
+        <SyncLoader size={10} color="var(--color-cta)" />
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   )
 }

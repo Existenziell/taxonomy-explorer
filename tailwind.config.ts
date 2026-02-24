@@ -13,8 +13,8 @@ export default {
         sans: ['Gotu', 'Arial', 'sans-serif'],
       },
       colors: {
-        brand: 'var(--color-brand)',
-        'brand-dark': 'var(--color-brand-dark)',
+        accent: 'var(--color-accent)',
+        'accent-dark': 'var(--color-accent-dark)',
         cta: 'var(--color-cta)',
         grey: 'var(--color-grey)',
         'grey-dark': 'var(--color-grey-dark)',

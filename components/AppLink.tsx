@@ -1,12 +1,5 @@
 import Link from 'next/link'
-import type { ReactNode } from 'react'
-
-type AppLinkProps = {
-  href: string
-  children: ReactNode
-  className?: string
-  prefetch?: boolean
-}
+import type { AppLinkProps } from '@/types'
 
 export default function AppLink ({ href, children, className, prefetch = true }: AppLinkProps) {
   const internal = href.startsWith('/')

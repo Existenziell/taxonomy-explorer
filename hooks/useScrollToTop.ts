@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-export default function useScrollToTop (threshold = 800): { showButton: boolean } {
+export default function useScrollToTop (threshold = 800): {
+  showButton: boolean
+  scrollToTop: () => void
+} {
   const [showButton, setShowButton] = useState(false)
+
+  const scrollToTop = useCallback(() => {
+    window.scroll({ top: 0, left: 0, behavior: 'smooth' })
+  }, [])
 
   useEffect(() => {
     const handler = (): void => {
@@ -12,5 +19,5 @@ export default function useScrollToTop (threshold = 800): { showButton: boolean 
     return () => document.removeEventListener('scroll', handler)
   }, [threshold])
 
-  return { showButton }
+  return { showButton, scrollToTop }
 }

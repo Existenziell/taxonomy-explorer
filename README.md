@@ -1,3 +1,3 @@
-# Cozumel Taxonomy
+# Taxonomy Explorer
 
-Retrieve and visualize taxonomy data from iNaturalist using their [API](https://api.inaturalist.org/v1/docs/#/)
+Browse and explore species taxonomy from iNaturalist using their [API](https://api.inaturalist.org/v1/docs/#/).

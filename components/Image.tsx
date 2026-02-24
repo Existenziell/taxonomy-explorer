@@ -12,20 +12,25 @@ type AppImageProps = NextImageProps & {
 export default function Image ({
   wrapperClassName,
   sizes,
-  placeholder = 'blur',
+  placeholder,
   className,
+  blurDataURL,
   ...props
 }: AppImageProps) {
-  const wrapperClass = `nextimg ${wrapperClassName ?? ''}`.trim()
-
-  return (
-    <div className={wrapperClass}>
-      <NextImage
-        sizes={sizes ?? DEFAULT_SIZES}
-        placeholder={placeholder}
-        className={className}
-        {...props}
-      />
-    </div>
+  const effectivePlaceholder = placeholder ?? (blurDataURL != null ? 'blur' : 'empty')
+  const image = (
+    <NextImage
+      sizes={sizes ?? DEFAULT_SIZES}
+      placeholder={effectivePlaceholder}
+      className={className}
+      blurDataURL={blurDataURL}
+      {...props}
+    />
   )
+
+  if (wrapperClassName) {
+    return <div className={wrapperClassName.trim()}>{image}</div>
+  }
+
+  return image
 }

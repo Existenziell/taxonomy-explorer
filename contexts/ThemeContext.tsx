@@ -9,14 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import type { ThemeMode, ThemeContextValue } from '@/types'
 
-export type ThemeMode = 'light' | 'dark' | 'auto'
-
-type ThemeContextValue = {
-  theme: ThemeMode | undefined
-  resolvedTheme: 'light' | 'dark'
-  setTheme: (mode: ThemeMode) => void
-}
+export type { ThemeMode } from '@/types'
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
@@ -37,6 +32,7 @@ function getResolvedFromPreference (): 'light' | 'dark' {
 }
 
 export function ThemeProvider ({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false)
   const [theme, setThemeState] = useState<ThemeMode | undefined>(undefined)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
 
@@ -74,6 +70,7 @@ export function ThemeProvider ({ children }: { children: ReactNode }) {
         setResolvedTheme(resolved)
         applyTheme(resolved)
       }
+      setMounted(true)
     }
     queueMicrotask(applyStored)
   }, [])
@@ -91,8 +88,8 @@ export function ThemeProvider ({ children }: { children: ReactNode }) {
   }, [theme])
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ theme, resolvedTheme, setTheme }),
-    [theme, resolvedTheme, setTheme],
+    () => ({ theme, resolvedTheme, mounted, setTheme }),
+    [theme, resolvedTheme, mounted, setTheme],
   )
 
   return (

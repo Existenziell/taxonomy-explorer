@@ -6,7 +6,7 @@
  */
 const fs = require('fs')
 const path = require('path')
-const { colors, mauve, mauveDark, light, dark } = require('../lib/theme.js')
+const { colors, mist, light, dark } = require('../lib/theme.js')
 
 const baseVars = {
   '--color-cta': colors.cta,
@@ -14,16 +14,16 @@ const baseVars = {
 
 function semanticVars(themeObj, greyDarkValue) {
   return {
-    '--color-brand': themeObj[1],
-    '--color-brand-dark': themeObj[6],
+    '--color-accent': themeObj[1],
+    '--color-accent-dark': themeObj[6],
     '--color-grey': themeObj[4],
     '--color-grey-dark': greyDarkValue,
   }
 }
 
-function mauveVars(scale) {
+function mistVars(scale) {
   return Object.fromEntries(
-    Object.entries(scale).map(([step, value]) => [`--color-mauve-${step}`, value])
+    Object.entries(scale).map(([step, value]) => [`--color-mist-${step}`, value])
   )
 }
 
@@ -37,13 +37,13 @@ const rootVars = {
   ...baseVars,
   ...semanticVars(light, dark[4]),
   ...levelVars(light),
-  ...mauveVars(mauve),
+  ...mistVars(mist),
 }
 const darkVars = {
   ...baseVars,
   ...semanticVars(dark, dark[4]),
   ...levelVars(dark),
-  ...mauveVars(mauveDark),
+  ...mistVars(mist),
 }
 
 const lines = [

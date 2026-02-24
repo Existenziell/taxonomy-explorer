@@ -1,17 +1,10 @@
 /* --------------------------------------------------------
-Style Sheet for Cozumel Taxonomy
+Style Sheet for Taxonomy Explorer
 ----------------------------------------------------------*/
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-.nextimg {
-  font-size: 0;
-  letter-spacing: 0;
-  word-spacing: 0;
-  position: relative;
-}
 
 .link {
   @apply border-b border-dotted border-cta outline-none;
@@ -25,51 +18,120 @@ Style Sheet for Cozumel Taxonomy
   @apply cursor-not-allowed;
 }
 
-
-/* ==========================================================================
-	Search 
-	========================================================================== */
-
-input[type='search']:not(:disabled) {
-  @apply h-[40px] min-w-[150px] pl-2 text-sm ml-2 border-2 border-gray-100 rounded-sm focus:outline-none focus:ring-0 focus:border-cta dark:focus:border-cta dark:border-gray-700 bg-brand dark:bg-brand-dark text-black dark:text-white;
+.card {
+  @apply rounded shadow bg-level-3 text-level-6 p-6 transition-all;
 }
 
-input[type='search']::-webkit-search-cancel-button{
-  display: none;    
-}
-
-.arrow-nav {
-  @apply w-8 h-8 hover:text-cta hover:bg-grey hover:dark:bg-grey-dark rounded;
+.card-compact {
+  @apply w-full p-4;
 }
 
 /* ==========================================================================
-	Filters 
+	Semantic typography and layout
 	========================================================================== */
 
-input[type='radio']:after {
-  @apply w-4 h-4 content-[''] cursor-pointer inline-block relative -top-[2px] -left-[2px]
-  bg-grey dark:bg-grey-dark border-2 border-white rounded-full;
+@layer components {
+  .title {
+    @apply text-4xl mb-12;
+  }
+
+  .title-hero {
+    @apply text-6xl text-center mb-12;
+  }
+
+  .subtitle {
+    @apply text-center max-w-xl mb-6;
+  }
+
+  .section-heading {
+    @apply text-base font-semibold mb-2;
+  }
+
+  .card-title {
+    @apply text-lg font-bold mb-4 capitalize;
+  }
+
+  .toolbar {
+    @apply flex justify-between items-center w-full;
+  }
+
+  .action-button {
+    @apply flex items-center gap-1 w-max hover:text-cta;
+  }
+
+  .placeholder-image {
+    @apply w-24 h-24 text-sm flex items-center justify-center;
+  }
+
+  .tag {
+    @apply px-2 py-0.5 rounded text-xs bg-level-4 text-level-6;
+  }
+
+  .overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent;
+  }
 }
 
-input[type='radio']:checked:after {
-  @apply bg-cta;
-}
+/* ==========================================================================
+	Form controls: .input, .input-search, .radio, .checkbox
+	========================================================================== */
 
-input[type="checkbox"] {
-  @apply grid justify-center items-center appearance-none w-4 h-4 bg-white dark:bg-brand m-0 text-brand-dark dark:text-brand rounded-sm cursor-pointer;
-}
+@layer components {
+  /* Text / search input – shared base */
+  .input {
+    @apply h-10 min-w-[150px] px-3 text-sm border-2 border-grey dark:border-grey-dark bg-accent text-accent-dark
+      rounded-lg
+      outline-none
+      transition-[border-color,box-shadow] duration-200 ease-out
+      placeholder:text-grey-dark dark:placeholder:text-grey
+      focus:border-cta focus:ring-2 focus:ring-cta
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-input[type="checkbox"]::before {
-  @apply cursor-pointer;
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--color-cta);
-}
+  .input-search {
+    @apply input pr-9;
+  }
 
-input[type="checkbox"]:checked::before {
-  @apply cursor-pointer;
-  transform: scale(1);
+  .input-search::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  /* Radio – circular, CTA when checked */
+  input[type="radio"].radio {
+    @apply appearance-none w-4 h-4 m-0 cursor-pointer
+      border-2 border-grey dark:border-grey-dark
+      rounded-full
+      transition-[border-color,background-color,box-shadow] duration-200 ease-out
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 focus-visible:ring-offset-accent;
+    background-color: var(--color-accent);
+  }
+
+  input[type="radio"].radio:checked {
+    @apply border-cta;
+    background-color: var(--color-cta);
+    box-shadow: inset 0 0 0 2px var(--color-accent);
+  }
+
+  /* Checkbox – rounded square, checkmark on checked */
+  input[type="checkbox"].checkbox {
+    @apply grid justify-center items-center appearance-none w-4 h-4 m-0 cursor-pointer
+      border-2 border-grey dark:border-grey-dark
+      bg-accent text-accent-dark
+      rounded-md
+      transition-[border-color,box-shadow] duration-200 ease-out
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 focus-visible:ring-offset-accent;
+  }
+
+  input[type="checkbox"].checkbox::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    transform: scale(0);
+    transition: transform 120ms ease-in-out;
+    box-shadow: inset 1em 1em var(--color-cta);
+  }
+
+  input[type="checkbox"].checkbox:checked::before {
+    transform: scale(1);
+  }
 }
