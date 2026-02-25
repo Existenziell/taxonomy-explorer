@@ -18,13 +18,15 @@ export default function Search ({ search, setSearch }: SearchProps) {
         autoCapitalize="none"
         className="w-full pl-3 pr-9 py-2 rounded border border-cta bg-level-3 text-sm focus:outline-none focus:ring-2 focus:ring-cta"
       />
-      <button
-        onClick={() => setSearch('')}
-        className="absolute right-2 text-secondary hover:text-cta h-max"
-        aria-label="Reset search"
-      >
-        <XIcon className="w-5 h-5" />
-      </button>
+      {search.length > 0 && (
+        <button
+          onClick={() => setSearch('')}
+          className="absolute right-2 text-secondary hover:text-cta h-max"
+          aria-label="Reset search"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+      )}
     </div>
   )
 }
