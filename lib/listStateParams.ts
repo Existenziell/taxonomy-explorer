@@ -1,0 +1,80 @@
+import type { OrderByOption } from '@/types'
+import {
+  DEFAULT_PLACE_ID,
+  PLACE_ID_PARAM,
+  PAGE_PARAM,
+  SEARCH_PARAM,
+  ORDER_PARAM,
+  ENDEMIC_PARAM,
+  TAXON_PARAM,
+} from '@/lib/constants'
+
+const VALID_ORDER: OrderByOption[] = ['count_desc', 'count_asc', 'name_asc', 'name_desc']
+const VALID_TAXON = new Set([
+  'all', 'actinopterygii', 'animalia', 'amphibia', 'arachnida', 'aves', 'chromista',
+  'fungi', 'insecta', 'mammalia', 'mollusca', 'reptilia', 'plantae', 'protozoa', 'unknown',
+])
+
+export interface ListStateParams {
+  placeId: number
+  page: number
+  search: string
+  orderBy: OrderByOption
+  filterEndemic: boolean
+  filterSpeciesClass: string
+}
+
+interface SearchParamsLike {
+  get(name: string): string | null
+}
+
+export function parseListStateFromSearchParams(
+  searchParams: SearchParamsLike
+): ListStateParams {
+  const placeIdRaw = searchParams.get(PLACE_ID_PARAM)
+  const placeId = placeIdRaw != null && /^\d+$/.test(placeIdRaw)
+    ? Math.max(1, parseInt(placeIdRaw, 10))
+    : DEFAULT_PLACE_ID
+
+  const pageRaw = searchParams.get(PAGE_PARAM)
+  const page = pageRaw != null && /^\d+$/.test(pageRaw)
+    ? Math.max(1, parseInt(pageRaw, 10))
+    : 1
+
+  const search = searchParams.get(SEARCH_PARAM) ?? ''
+
+  const orderRaw = searchParams.get(ORDER_PARAM)
+  const orderBy: OrderByOption = orderRaw != null && VALID_ORDER.includes(orderRaw as OrderByOption)
+    ? (orderRaw as OrderByOption)
+    : 'count_desc'
+
+  const endemicRaw = searchParams.get(ENDEMIC_PARAM)
+  const filterEndemic = endemicRaw === 'true'
+
+  const taxonRaw = searchParams.get(TAXON_PARAM)
+  const filterSpeciesClass =
+    taxonRaw != null && taxonRaw !== '' && VALID_TAXON.has(taxonRaw)
+      ? (taxonRaw === 'all' ? '' : taxonRaw)
+      : ''
+
+  return {
+    placeId,
+    page,
+    search,
+    orderBy,
+    filterEndemic,
+    filterSpeciesClass,
+  }
+}
+
+export function buildListStateSearchParams(state: ListStateParams): string {
+  const params = new URLSearchParams()
+  params.set(PLACE_ID_PARAM, String(state.placeId))
+  params.set(PAGE_PARAM, String(state.page))
+  if (state.search) params.set(SEARCH_PARAM, state.search)
+  params.set(ORDER_PARAM, state.orderBy)
+  params.set(ENDEMIC_PARAM, String(state.filterEndemic))
+  if (state.filterSpeciesClass) params.set(TAXON_PARAM, state.filterSpeciesClass)
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}

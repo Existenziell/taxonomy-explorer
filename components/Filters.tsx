@@ -22,6 +22,7 @@ export default function Filters({
   setFilterEndemic,
   filterSpeciesClass,
   setFilterSpeciesClass,
+  onResetFilters,
 }: FiltersProps) {
   const [placeQuery, setPlaceQuery] = useState('')
   const [placeSuggestions, setPlaceSuggestions] = useState<PlaceAutocompleteResult[]>([])
@@ -210,7 +211,7 @@ export default function Filters({
         </button>
         {filterExpanded && (
           <div className="flex flex-col md:flex-row md:gap-6 pt-2">
-            <section className="mb-6 md:mb-0 md:min-w-0 md:flex-1">
+            <section className="mb-6 md:mb-0 md:min-w-0 md:flex-[2]">
               <p className="font-medium mb-1 mt-2">Filter per taxonomy class:</p>
               <ul className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 mt-2 text-sm">
                 {speciesClasses.map((c) => (
@@ -222,7 +223,7 @@ export default function Filters({
                   </li>
                 ))}
               </ul>
-              <label htmlFor="endemic" className="mt-4 cursor-pointer flex items-center gap-2 text-sm">
+              <label htmlFor="endemic" className="mt-6 cursor-pointer flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   id="endemic"
@@ -259,6 +260,13 @@ export default function Filters({
                 ))}
               </ul>
             </section>
+          </div>
+        )}
+        {filterExpanded && (
+          <div className="flex justify-end w-full mt-4">
+            <button type="button" onClick={onResetFilters} className="link text-sm bg-transparent border-0 cursor-pointer p-0">
+              Reset filters
+            </button>
           </div>
         )}
       </div>

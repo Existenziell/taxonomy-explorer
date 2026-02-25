@@ -77,6 +77,8 @@ export interface Taxon {
   rank_level?: number
   is_active?: boolean
   ancestor_ids?: number[]
+  parent_id?: number
+  ancestors?: Taxon[]
   colors?: Color[]
   establishment_means?: EstablishmentMeans | null
   preferred_establishment_means?: string | null
@@ -140,6 +142,7 @@ export interface FiltersProps {
   setFilterEndemic: SetFilterEndemic
   filterSpeciesClass: string
   setFilterSpeciesClass: SetFilterSpeciesClass
+  onResetFilters: () => void
 }
 
 export interface SearchProps {

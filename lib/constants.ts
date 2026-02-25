@@ -20,6 +20,13 @@ export const INATURALIST_PLACES = 'https://api.inaturalist.org/v1/places/autocom
 export const PLACE_ID_PARAM = 'place_id'
 export const INATURALIST_PLACES_BY_ID = 'https://api.inaturalist.org/v1/places'
 
+/** URL params for list state (home page filter/order/pagination) */
+export const PAGE_PARAM = 'page'
+export const SEARCH_PARAM = 'q'
+export const ORDER_PARAM = 'order'
+export const ENDEMIC_PARAM = 'endemic'
+export const TAXON_PARAM = 'taxon'
+
 /** Default place (Svalbard) when none is selected or geo unavailable */
 export const DEFAULT_PLACE_ID = 7354
 

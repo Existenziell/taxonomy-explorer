@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { SyncLoader } from 'react-spinners'
 import { useEffect, useState } from 'react'
@@ -24,7 +24,16 @@ function establishmentLabel (taxon: Taxon): string | null {
 
 export default function SpeciesPage () {
   const params = useParams()
+  const router = useRouter()
   const id = typeof params?.id === 'string' ? params.id : undefined
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/')
+    }
+  }
 
   const { status, data } = useQuery<TaxaResponse>({
     queryKey: ['species', id],
@@ -89,10 +98,14 @@ export default function SpeciesPage () {
   const closeFullscreen = () => setFullscreenImageUrl(null)
   const displayName = capitalize(preferred_common_name ?? name) ?? ''
 
+  const ancestors = taxon.ancestors ?? []
+  const taxonomyRows = [...ancestors, taxon]
+  const hasTaxonomy = taxonomyRows.length > 0
+
   return (
     <div className="flex flex-col items-center px-6 sm:px-16 w-full">
       <div className="absolute left-4 top-8">
-        <Arrow direction="left" href="/" ariaLabel="Back to list" />
+        <Arrow direction="left" onClick={handleBack} ariaLabel="Back to list" />
       </div>
 
       <h1 className="title mb-2">{displayName}</h1>
@@ -102,45 +115,81 @@ export default function SpeciesPage () {
         </p>
 
       <div className="flex flex-col w-full gap-4 max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Taxonomy tree */}
+          <section className="card card-compact" aria-labelledby="taxonomy-heading" aria-label="Taxonomic hierarchy">
+            <h2 id="taxonomy-heading" className="section-heading">
+              Taxonomy
+            </h2>
+            {hasTaxonomy ? (
+              <ul className="border-l-2 border-level-4 pl-4 space-y-1.5 text-sm" role="list">
+                {taxonomyRows.map((row, index) => {
+                  const isLast = index === taxonomyRows.length - 1
+                  const branch = isLast ? '└' : '├'
+                  const rankLabel = row.rank != null ? capitalize(row.rank) : '—'
+                  const rowName = row.preferred_common_name ?? row.name ?? '—'
+                  const isCurrent = row.id === taxon.id
+                  return (
+                    <li key={row.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <span className="text-level-5 select-none" aria-hidden="true">{branch}</span>
+                      <span className="text-secondary min-w-[5.5rem]">{rankLabel}</span>
+                      {ancestors.some(a => a.id === row.id) ? (
+                        <AppLink href={`/species/${row.id}`} className="link">
+                          {rowName}
+                        </AppLink>
+                      ) : (
+                        <span className={isCurrent ? 'font-medium text-cta' : undefined}>{rowName}</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-secondary">No taxonomy data available.</p>
+            )}
+          </section>
 
           {/* Conservation and establishment */}
-          {hasConservation && (
-            <section className="card card-compact" aria-labelledby="conservation-heading">
-              <h2 id="conservation-heading" className="section-heading">
-                Conservation and establishment
-              </h2>
-              {extinct === true && (
-                <p className="text-sm mb-1">This species has become extinct.</p>
-              )}
-              <p className="text-sm">
-                Status:{' '}
-                {conservation_status?.status_name != null && conservation_status.status_name !== ''
-                  ? translateStatusName(conservation_status.status_name)
-                  : 'No data'}
-              </p>
-              {iucn != null && (
-                <p className="text-sm mt-1">IUCN: {iucn.label}</p>
-              )}
-              {conservation_statuses != null && conservation_statuses.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-sm font-medium mb-0.5">Conservation statuses:</p>
-                  <ul className="list-disc list-inside space-y-0.5 text-sm">
-                    {conservation_statuses.map((cs, i) => (
-                      <li key={i}>
-                        {cs.status_name ?? cs.status ?? '—'}
-                        {cs.authority != null && cs.authority !== '' && ` (${cs.authority})`}
-                        {cs.place?.display_name != null && cs.place.display_name !== '' && ` — ${cs.place.display_name}`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {establishment != null && (
-                <p className="text-sm mt-1">Establishment: {establishment}</p>
-              )}
-            </section>
-          )}
+          <section className="card card-compact" aria-labelledby="conservation-heading">
+            <h2 id="conservation-heading" className="section-heading">
+              Conservation and establishment
+            </h2>
+            {hasConservation ? (
+              <>
+                {extinct === true && (
+                  <p className="text-sm mb-1">This species has become extinct.</p>
+                )}
+                <p className="text-sm">
+                  Status:{' '}
+                  {conservation_status?.status_name != null && conservation_status.status_name !== ''
+                    ? translateStatusName(conservation_status.status_name)
+                    : 'No data'}
+                </p>
+                {iucn != null && (
+                  <p className="text-sm mt-1">IUCN: {iucn.label}</p>
+                )}
+                {conservation_statuses != null && conservation_statuses.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-0.5">Conservation statuses:</p>
+                    <ul className="list-disc list-inside space-y-0.5 text-sm">
+                      {conservation_statuses.map((cs, i) => (
+                        <li key={i}>
+                          {cs.status_name ?? cs.status ?? '—'}
+                          {cs.authority != null && cs.authority !== '' && ` (${cs.authority})`}
+                          {cs.place?.display_name != null && cs.place.display_name !== '' && ` — ${cs.place.display_name}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {establishment != null && (
+                  <p className="text-sm mt-1">Establishment: {establishment}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-secondary">No conservation or establishment data.</p>
+            )}
+          </section>
 
           {/* Observations and activity */}
           <section className="card card-compact" aria-labelledby="observations-heading">

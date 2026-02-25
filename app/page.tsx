@@ -5,7 +5,7 @@ import AppLink from '@/components/AppLink'
 import translateStatusName from '@/lib/translateStatusName'
 import downloadCsv from '@/lib/downloadCsv'
 import Pagination from '@/components/Pagination'
-import { useState, useCallback, useMemo, useEffect, Suspense } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef, Suspense, type SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useScrollToTop from '@/hooks/useScrollToTop'
 import { useQuery } from '@tanstack/react-query'
@@ -15,7 +15,7 @@ import { DownloadIcon } from '@/components/Icons'
 import Arrow from '@/components/Arrow'
 import Filters from '@/components/Filters'
 import Search from '@/components/Search'
-import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult } from '@/types'
+import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult, GeoResponse } from '@/types'
 import {
   DEFAULT_PER_PAGE,
   MIN_SEARCH_LENGTH,
@@ -24,9 +24,9 @@ import {
   DEFAULT_PLACE_ID,
   DEFAULT_PLACE_DISPLAY_NAME,
   FALLBACK_REGIONS,
-  PLACE_ID_PARAM,
   INATURALIST_PLACES_BY_ID,
 } from '@/lib/constants'
+import { parseListStateFromSearchParams, buildListStateSearchParams } from '@/lib/listStateParams'
 
 function getPlaceDisplayName (placeId: number): string {
   if (placeId === DEFAULT_PLACE_ID) return DEFAULT_PLACE_DISPLAY_NAME
@@ -35,25 +35,83 @@ function getPlaceDisplayName (placeId: number): string {
 
 function HomePageContent () {
   const searchParams = useSearchParams()
-  const placeIdFromUrl = searchParams.get(PLACE_ID_PARAM)
-  const initialPlaceId = placeIdFromUrl != null ? parseInt(placeIdFromUrl, 10) : DEFAULT_PLACE_ID
-  const validPlaceId = Number.isInteger(initialPlaceId) && initialPlaceId > 0 ? initialPlaceId : DEFAULT_PLACE_ID
+  const initial = useMemo(
+    () => parseListStateFromSearchParams(searchParams),
+    [searchParams]
+  )
 
-  const [placeId, setPlaceIdState] = useState(validPlaceId)
-  const [placeDisplayName, setPlaceDisplayName] = useState(() => getPlaceDisplayName(validPlaceId))
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [filterSpeciesClass, setFilterSpeciesClass] = useState('')
-  const [filterEndemic, setFilterEndemic] = useState(false)
-  const [orderBy, setOrderBy] = useState<OrderByOption>('count_desc')
+  const [placeId, setPlaceIdState] = useState(initial.placeId)
+  const [placeDisplayName, setPlaceDisplayName] = useState(() => getPlaceDisplayName(initial.placeId))
+  const [page, setPage] = useState(initial.page)
+  const [search, setSearch] = useState(initial.search)
+  const [filterSpeciesClass, setFilterSpeciesClass] = useState(initial.filterSpeciesClass)
+  const [filterEndemic, setFilterEndemic] = useState(initial.filterEndemic)
+  const [orderBy, setOrderBy] = useState<OrderByOption>(initial.orderBy)
   const { showButton: showScrollToTop, scrollToTop } = useScrollToTop(SCROLL_TO_TOP_THRESHOLD)
+  const hasAttemptedGeoRef = useRef(false)
+
+  useEffect(() => {
+    const queryString = buildListStateSearchParams({
+      placeId,
+      page,
+      search,
+      orderBy,
+      filterEndemic,
+      filterSpeciesClass,
+    })
+    const url = `${window.location.pathname}${queryString}`
+    if (window.location.pathname + window.location.search !== url) {
+      window.history.replaceState(null, '', url)
+    }
+  }, [placeId, page, search, orderBy, filterEndemic, filterSpeciesClass])
+
+  const setSearchAndResetPage = useCallback((value: SetStateAction<string>) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
 
   const setPlace = useCallback((id: number, displayName: string) => {
     setPlaceIdState(id)
     setPlaceDisplayName(displayName)
-    const url = new URL(window.location.href)
-    url.searchParams.set(PLACE_ID_PARAM, String(id))
-    window.history.replaceState(null, '', url.toString())
+    setPage(1)
+  }, [])
+
+  useEffect(() => {
+    if (hasAttemptedGeoRef.current || placeId !== DEFAULT_PLACE_ID) return
+    hasAttemptedGeoRef.current = true
+    let cancelled = false
+    fetch('/api/geo')
+      .then((res) => res.json() as Promise<GeoResponse>)
+      .then((data) => {
+        if (cancelled) return
+        if (data?.suggestedPlaceId != null && data?.suggestedPlaceName != null) {
+          setPlace(data.suggestedPlaceId, data.suggestedPlaceName)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [placeId, setPlace])
+
+  const setOrderByAndResetPage = useCallback((value: SetStateAction<OrderByOption>) => {
+    setOrderBy(value)
+    setPage(1)
+  }, [])
+
+  const setFilterEndemicAndResetPage = useCallback((value: SetStateAction<boolean>) => {
+    setFilterEndemic(value)
+    setPage(1)
+  }, [])
+
+  const setFilterSpeciesClassAndResetPage = useCallback((value: SetStateAction<string>) => {
+    setFilterSpeciesClass(value)
+    setPage(1)
+  }, [])
+
+  const resetFiltersAndOrder = useCallback(() => {
+    setOrderBy('count_desc')
+    setFilterEndemic(false)
+    setFilterSpeciesClass('')
+    setPage(1)
   }, [])
 
   useEffect(() => {
@@ -89,6 +147,12 @@ function HomePageContent () {
   const numberOfPages =
     data?.per_page != null ? Math.ceil(data.total_results / data.per_page) : 0
 
+  useEffect(() => {
+    if (numberOfPages >= 1 && page > numberOfPages) {
+      queueMicrotask(() => setPage(numberOfPages))
+    }
+  }, [numberOfPages, page])
+
   const sortedResults = useMemo((): SpeciesCountResult[] | undefined => {
     const results = data?.results
     if (results == null) return undefined
@@ -114,7 +178,7 @@ function HomePageContent () {
       <h1 className="title title-hero">Taxonomy Explorer</h1>
       <div className="flex flex-col items-center w-full pb-16">
         <div className="toolbar mb-4">
-          <Search search={search} setSearch={setSearch} />
+          <Search search={search} setSearch={setSearchAndResetPage} />
           <button
             type="button"
             onClick={() => {
@@ -131,11 +195,12 @@ function HomePageContent () {
           placeDisplayName={placeDisplayName}
           onPlaceSelect={setPlace}
           orderBy={orderBy}
-          setOrderBy={setOrderBy}
+          setOrderBy={setOrderByAndResetPage}
           filterEndemic={filterEndemic}
-          setFilterEndemic={setFilterEndemic}
+          setFilterEndemic={setFilterEndemicAndResetPage}
           filterSpeciesClass={filterSpeciesClass}
-          setFilterSpeciesClass={setFilterSpeciesClass}
+          setFilterSpeciesClass={setFilterSpeciesClassAndResetPage}
+          onResetFilters={resetFiltersAndOrder}
         />
 
         {status === 'pending'
@@ -157,7 +222,7 @@ function HomePageContent () {
                 totalResults={data != null && 'error' in data ? 0 : data?.total_results}
                 numberOfPages={numberOfPages}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-8 w-full">
                 {sortedResults?.map((s) => {
                   const {
                     id,
