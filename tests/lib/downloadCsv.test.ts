@@ -7,16 +7,28 @@ describe('downloadCsv', () => {
   let appendChildSpy: ReturnType<typeof vi.spyOn>
   let removeChildSpy: ReturnType<typeof vi.spyOn>
   let clickSpy: ReturnType<typeof vi.fn>
+  let blobContent: string
 
   beforeEach(() => {
     clickSpy = vi.fn()
-    const fakeAnchor = { href: '', click: clickSpy } as unknown as HTMLAnchorElement
+    blobContent = ''
+    const fakeAnchor = {
+      href: '',
+      download: '',
+      click: clickSpy,
+    } as unknown as HTMLAnchorElement
     createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName.toLowerCase() === 'a') return fakeAnchor
       return document.createElement(tagName)
     })
     appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => fakeAnchor)
     removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => fakeAnchor)
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    vi.spyOn(globalThis, 'Blob').mockImplementation(function (this: Blob, parts: BlobPart[]) {
+      blobContent = (parts as string[]).join('')
+      return { size: 0, type: '' } as Blob
+    })
   })
 
   it('builds CSV with header and one data row and triggers anchor click', () => {
@@ -35,25 +47,19 @@ describe('downloadCsv', () => {
       },
     ]
 
-    const encodeURISpy = vi.spyOn(globalThis, 'encodeURI').mockImplementation((s) => s)
-
     downloadCsv(species)
 
     expect(createElementSpy).toHaveBeenCalledWith('a')
     expect(appendChildSpy).toHaveBeenCalled()
     expect(clickSpy).toHaveBeenCalledTimes(1)
     expect(removeChildSpy).toHaveBeenCalled()
-
-    const csvContent = (encodeURISpy.mock.calls[0] as [string])[0]
-    expect(csvContent).toContain('Name,Latin Name,Taxonomy,Observations,Status,Wikipedia Link,Photo')
-    expect(csvContent).toContain('White Oak')
-    expect(csvContent).toContain('Quercus alba')
-    expect(csvContent).toContain('Plantae')
-    expect(csvContent).toContain('42')
-    expect(csvContent).toContain('Threatened')
-    expect(csvContent).toContain('https://en.wikipedia.org/wiki/Quercus_alba')
-    expect(csvContent).toContain('https://example.com/photo.jpg')
-
-    encodeURISpy.mockRestore()
+    expect(blobContent).toContain('Name,Latin Name,Taxonomy,Observations,Status,Wikipedia Link,Photo')
+    expect(blobContent).toContain('White Oak')
+    expect(blobContent).toContain('Quercus alba')
+    expect(blobContent).toContain('Plantae')
+    expect(blobContent).toContain('42')
+    expect(blobContent).toContain('Threatened')
+    expect(blobContent).toContain('https://en.wikipedia.org/wiki/Quercus_alba')
+    expect(blobContent).toContain('https://example.com/photo.jpg')
   })
 })

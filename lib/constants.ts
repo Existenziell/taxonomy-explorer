@@ -20,6 +20,12 @@ export const INATURALIST_PLACES = 'https://api.inaturalist.org/v1/places/autocom
 export const PLACE_ID_PARAM = 'place_id'
 export const INATURALIST_PLACES_BY_ID = 'https://api.inaturalist.org/v1/places'
 
+/** URL for GitHub repository */
+export const GITHUB_URL = 'https://github.com/Existenziell/taxonomy-explorer'
+
+/** URL for Christof's website */
+export const CHRISTOF_URL = 'https://www.christof.digital/'
+
 /** URL params for list state (home page filter/order/pagination) */
 export const PAGE_PARAM = 'page'
 export const SEARCH_PARAM = 'q'

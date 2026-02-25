@@ -3,8 +3,8 @@
 import Image from '@/components/Image'
 import AppLink from '@/components/AppLink'
 import translateStatusName from '@/lib/translateStatusName'
-import downloadCsv from '@/lib/downloadCsv'
 import Pagination from '@/components/Pagination'
+import DownloadModal from '@/components/DownloadModal'
 import { useState, useCallback, useMemo, useEffect, useRef, Suspense, type SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useScrollToTop from '@/hooks/useScrollToTop'
@@ -27,6 +27,7 @@ import {
   INATURALIST_PLACES_BY_ID,
 } from '@/lib/constants'
 import { parseListStateFromSearchParams, buildListStateSearchParams } from '@/lib/listStateParams'
+import { sortSpeciesResults } from '@/lib/sortSpeciesResults'
 
 function getPlaceDisplayName (placeId: number): string {
   if (placeId === DEFAULT_PLACE_ID) return DEFAULT_PLACE_DISPLAY_NAME
@@ -49,6 +50,7 @@ function HomePageContent () {
   const [orderBy, setOrderBy] = useState<OrderByOption>(initial.orderBy)
   const { showButton: showScrollToTop, scrollToTop } = useScrollToTop(SCROLL_TO_TOP_THRESHOLD)
   const hasAttemptedGeoRef = useRef(false)
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
   useEffect(() => {
     const queryString = buildListStateSearchParams({
@@ -156,39 +158,41 @@ function HomePageContent () {
   const sortedResults = useMemo((): SpeciesCountResult[] | undefined => {
     const results = data?.results
     if (results == null) return undefined
-    if (orderBy === 'count_desc') return results
-    const sorted = [...results]
-    if (orderBy === 'count_asc') {
-      sorted.sort((a, b) => a.count - b.count)
-    } else {
-      sorted.sort((a, b) => {
-        const nameA = (a.taxon.preferred_common_name ?? a.taxon.name ?? '').toLowerCase()
-        const nameB = (b.taxon.preferred_common_name ?? b.taxon.name ?? '').toLowerCase()
-        const cmp = nameA.localeCompare(nameB)
-        return orderBy === 'name_asc' ? cmp : -cmp
-      })
-    }
-    return sorted
+    return sortSpeciesResults(results, orderBy)
   }, [data?.results, orderBy])
 
   if (status === 'error') return <p>{status}</p>
 
   return (
     <>
-      <h1 className="title title-hero">Taxonomy Explorer</h1>
-      <div className="flex flex-col items-center w-full pb-16">
+      <h1 className="title title-hero mb-2">Taxonomy Explorer</h1>
+      <p className="subtitle text-center mx-auto mb-12">Explore the taxonomy of species in your area</p>
+      <div className="flex flex-col items-center w-full p-6 pb-16 bg-level-2 rounded">
         <div className="toolbar mb-4">
           <Search search={search} setSearch={setSearchAndResetPage} />
           <button
             type="button"
-            onClick={() => {
-              if (sortedResults != null) downloadCsv(sortedResults)
-            }}
+            onClick={() => setDownloadModalOpen(true)}
             className="action-button"
+            aria-label="Download"
           >
             <DownloadIcon className="w-6 h-6" />
           </button>
         </div>
+
+        <DownloadModal
+          open={downloadModalOpen}
+          onClose={() => setDownloadModalOpen(false)}
+          species={sortedResults ?? []}
+          totalResults={data != null && !('error' in data) ? (data.total_results ?? 0) : 0}
+          exportParams={{
+            placeId,
+            search,
+            filterEndemic,
+            filterSpeciesClass,
+            orderBy,
+          }}
+        />
 
         <Filters
           placeId={placeId}
@@ -257,9 +261,9 @@ function HomePageContent () {
                         <h2 className="card-title">
                           {preferred_common_name ?? 'No common name available'}
                         </h2>
-                        <p>Scientific Name: {name}</p>
+                        <p>{name}</p>
                         <p>Taxonomy: {iconic_taxon_name}</p>
-                        <p>Number of observations: {s.count}</p>
+                        <p>Observations: {s.count}</p>
                         <p>
                           Status:{' '}
                           {conservation_status?.status_name != null

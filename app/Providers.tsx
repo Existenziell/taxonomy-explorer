@@ -19,9 +19,7 @@ export default function Providers ({ children }: ProvidersProps) {
           showSpinner={false}
         />
         <ThemeToggle />
-        <main className='w-full min-h-screen px-4 sm:px-8 pb-20 pt-20 bg-level-1 text-level-6'>
-          {children}
-        </main>
+        {children}
       </ThemeProvider>
     </QueryClientProvider>
   )

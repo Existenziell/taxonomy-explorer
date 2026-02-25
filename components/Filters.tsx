@@ -35,6 +35,9 @@ export default function Filters({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  const hasActiveFilters =
+    orderBy !== 'count_desc' || filterEndemic || filterSpeciesClass !== ''
+
   useEffect(() => {
     if (geoLoaded) return
     let cancelled = false
@@ -113,12 +116,12 @@ export default function Filters({
   }
 
   const headerButtonClass =
-    'flex items-center justify-between gap-2 py-3.5 px-4 border-0 bg-level-3 cursor-pointer font-medium text-left hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 focus-visible:ring-offset-level-1'
+    'flex items-center justify-between gap-2 py-3.5 px-4 border-0 bg-level-1 cursor-pointer font-medium text-left hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 focus-visible:ring-offset-level-1'
 
   return (
     <>
       {/* Section 1: Location */}
-      <div className={`card bg-level-2 mb-4 w-full overflow-visible ${!locationExpanded ? '!pb-0' : ''}`}>
+      <div className={`card border border-level-3 !bg-level-2 mb-4 w-full overflow-visible ${!locationExpanded ? '!pb-0' : ''}`}>
         <button
           type="button"
           onClick={() => setLocationExpanded((e) => !e)}
@@ -169,7 +172,7 @@ export default function Filters({
                 onChange={(e) => setPlaceQuery(e.target.value)}
                 onFocus={() => placeSuggestions.length > 0 && setPlaceSuggestionsOpen(true)}
                 placeholder="Search for a place…"
-                className="w-full max-w-md px-3 py-2 rounded border border-cta bg-level-3 text-sm focus:outline-none focus:ring-2 focus:ring-cta"
+                className="w-full max-w-md px-3 py-2 rounded border border-cta bg-level-1 text-sm focus:outline-none focus:ring-2 focus:ring-cta"
                 autoComplete="off"
               />
               {placeSearchLoading && (
@@ -184,7 +187,7 @@ export default function Filters({
                     <li
                       key={place.id}
                       role="option"
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-level-4 border-b border-level-4 last:border-b-0"
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-level-4 border-b border-level-3 last:border-b-0"
                       onClick={() => handleSelectPlace(place)}
                     >
                       {place.display_name ?? place.name ?? `Place ${place.id}`}
@@ -199,7 +202,7 @@ export default function Filters({
       </div>
 
       {/* Section 2: Filters */}
-      <div className={`card bg-level-2 mb-8 w-full overflow-visible ${!filterExpanded ? '!pb-0' : ''}`}>
+      <div className={`card !bg-level-2 mb-8 w-full overflow-visible ${!filterExpanded ? '!pb-0' : ''}`}>
         <button
           type="button"
           onClick={() => setFilterExpanded((e) => !e)}
@@ -210,9 +213,9 @@ export default function Filters({
           {filterExpanded ? <ChevronUp className="w-5 h-5 shrink-0" /> : <ChevronDown className="w-5 h-5 shrink-0" />}
         </button>
         {filterExpanded && (
-          <div className="flex flex-col md:flex-row md:gap-6 pt-2">
+          <div className="flex flex-col md:flex-row md:gap-6 pt-2 mt-2">
             <section className="mb-6 md:mb-0 md:min-w-0 md:flex-[2]">
-              <p className="font-medium mb-1 mt-2">Filter per taxonomy class:</p>
+              <p className="font-medium mb-1">Filter per taxonomy class:</p>
               <ul className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 mt-2 text-sm">
                 {speciesClasses.map((c) => (
                   <li key={c}>
@@ -264,7 +267,12 @@ export default function Filters({
         )}
         {filterExpanded && (
           <div className="flex justify-end w-full mt-4">
-            <button type="button" onClick={onResetFilters} className="link text-sm bg-transparent border-0 cursor-pointer p-0">
+            <button
+              type="button"
+              onClick={onResetFilters}
+              disabled={!hasActiveFilters}
+              className={`link text-sm bg-transparent border-0 p-0 ${hasActiveFilters ? 'cursor-pointer' : 'cursor-default opacity-50'}`}
+            >
               Reset filters
             </button>
           </div>

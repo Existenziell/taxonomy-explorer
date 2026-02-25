@@ -1,36 +1,25 @@
 import type { SpeciesCountResult } from '@/types'
-import translateStatusName from '@/lib/translateStatusName'
-import capitalize from '@/lib/capitalize'
+import { getExportRows } from '@/lib/exportSpeciesData'
+
+function escapeCsvField (value: string): string {
+  if (!/[\n,"]/.test(value)) return value
+  return `"${value.replace(/"/g, '""')}"`
+}
 
 const downloadCsv = (species: SpeciesCountResult[]): void => {
-  const rows: string[][] = [
-    ['Name', 'Latin Name', 'Taxonomy', 'Observations', 'Status', 'Wikipedia Link', 'Photo'],
-  ]
-  species.map((s) => {
-    const element = [
-      capitalize(s.taxon.preferred_common_name) ?? '',
-      s.taxon.name,
-      s.taxon.iconic_taxon_name,
-      String(s.count),
-      s.taxon.conservation_status?.status_name
-        ? translateStatusName(s.taxon.conservation_status.status_name)
-        : 'No data',
-      s.taxon.wikipedia_url ?? '',
-      s.taxon.default_photo?.medium_url ?? '',
-    ]
-    rows.push(element)
-    return element
-  })
-
-  const csvContent =
-    'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n')
-  const encodedUri = encodeURI(csvContent)
-
+  const rows = getExportRows(species)
+  const csvContent = rows
+    .map((row) => row.map(escapeCsvField).join(','))
+    .join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
-  anchor.href = encodedUri
+  anchor.href = url
+  anchor.download = `species-export-${Date.now()}.csv`
   document.body.appendChild(anchor)
   anchor.click()
   document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
 }
 
 export default downloadCsv
