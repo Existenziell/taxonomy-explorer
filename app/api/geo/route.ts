@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { IP_API_BASE, INATURALIST_PLACES } from '@/lib/constants'
+import { IP_API_BASE, PLACES_AUTOCOMPLETE_BASE_URL } from '@/lib/constants'
 import type { IpApiResponse, PlacesResponse } from '@/types'
 
 function getClientIp (request: NextRequest): string | null {
@@ -34,7 +34,7 @@ export async function GET (request: NextRequest) {
 
     const countryName = geo.country
     const placeRes = await fetch(
-      `${INATURALIST_PLACES}?q=${encodeURIComponent(countryName)}`,
+      `${PLACES_AUTOCOMPLETE_BASE_URL}?q=${encodeURIComponent(countryName)}`,
       { next: { revalidate: 86400 } }
     )
     const placeData = (await placeRes.json()) as PlacesResponse

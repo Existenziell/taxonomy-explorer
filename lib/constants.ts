@@ -1,7 +1,14 @@
-export const DEFAULT_PER_PAGE = 20
+import type { OrderByOption } from '@/types'
+
+export const DEFAULT_PER_PAGE = 50
 
 /** Minimum number of characters before search query is sent to the API */
 export const MIN_SEARCH_LENGTH = 2
+
+/** Search string that meets minimum length for API; otherwise empty. */
+export function getEffectiveSearch (search: string): string {
+  return search.length >= MIN_SEARCH_LENGTH ? search : ''
+}
 
 /** Base URL for species counts; append place_id and other params (e.g. &place_id=37612&locale=en) */
 export const SPECIES_COUNTS_BASE_URL =
@@ -12,9 +19,6 @@ export const PLACES_AUTOCOMPLETE_BASE_URL = 'https://api.inaturalist.org/v1/plac
 
 /** Base URL for IP-based geo lookup */
 export const IP_API_BASE = 'http://ip-api.com/json'
-
-/** Base URL for iNaturalist places autocomplete */
-export const INATURALIST_PLACES = 'https://api.inaturalist.org/v1/places/autocomplete'
 
 /** URL for iNaturalist places by ID */
 export const PLACE_ID_PARAM = 'place_id'
@@ -55,3 +59,15 @@ export const FALLBACK_REGIONS: { id: number; name: string }[] = [
 ]
 
 export const SCROLL_TO_TOP_THRESHOLD = 800
+
+/** Valid order-by options for species list. */
+export const VALID_ORDER: readonly OrderByOption[] = ['count_desc', 'count_asc', 'name_asc', 'name_desc']
+
+/** Species class filter options (ordered for UI). */
+export const SPECIES_CLASS_OPTIONS = [
+  'all', 'actinopterygii', 'animalia', 'amphibia', 'arachnida', 'aves', 'chromista',
+  'fungi', 'insecta', 'mammalia', 'mollusca', 'reptilia', 'plantae', 'protozoa', 'unknown',
+] as const
+
+/** Set of valid taxon/species class values for validation. */
+export const VALID_TAXON = new Set<string>(SPECIES_CLASS_OPTIONS)

@@ -2,15 +2,13 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { FiltersProps, PlaceAutocompleteResult, OrderByOption, GeoResponse, PlacesAutocompleteResponse } from '@/types'
-import { FALLBACK_REGIONS, PLACES_AUTOCOMPLETE_BASE_URL, WORLD_PLACE_ID, WORLD_PLACE_DISPLAY_NAME } from '@/lib/constants'
+import { FALLBACK_REGIONS, PLACES_AUTOCOMPLETE_BASE_URL, SPECIES_CLASS_OPTIONS, WORLD_PLACE_ID, WORLD_PLACE_DISPLAY_NAME } from '@/lib/constants'
 import fetchApi from '@/lib/fetchApi'
 import { ChevronDown, ChevronUp } from '@/components/Icons'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 const PLACE_SEARCH_MIN_LENGTH = 2
 const PLACE_SEARCH_DEBOUNCE_MS = 300
-
-const speciesClasses = ['all', 'actinopterygii', 'animalia', 'amphibia', 'arachnida', 'aves', 'chromista', 'fungi', 'insecta', 'mammalia', 'mollusca', 'reptilia', 'plantae', 'protozoa', 'unknown']
 
 export default function Filters({
   placeId,
@@ -37,6 +35,12 @@ export default function Filters({
 
   const hasActiveFilters =
     orderBy !== 'count_desc' || filterEndemic || filterSpeciesClass !== ''
+
+  const isWorld = placeId === WORLD_PLACE_ID
+
+  useEffect(() => {
+    if (isWorld && filterEndemic) setFilterEndemic(false)
+  }, [isWorld, filterEndemic, setFilterEndemic])
 
   useEffect(() => {
     if (geoLoaded) return
@@ -182,7 +186,7 @@ export default function Filters({
                 onChange={(e) => setPlaceQuery(e.target.value)}
                 onFocus={() => placeSuggestions.length > 0 && setPlaceSuggestionsOpen(true)}
                 placeholder="Search for a place…"
-                className="w-full max-w-md px-3 py-2 rounded border border-cta bg-level-1 text-sm focus:outline-none focus:ring-2 focus:ring-cta"
+                className="input w-full max-w-md"
                 autoComplete="off"
               />
               {placeSearchLoading && (
@@ -227,7 +231,7 @@ export default function Filters({
             <section className="mb-6 md:mb-0 md:min-w-0 md:flex-[2]">
               <p className="font-medium mb-1">Filter per taxonomy class:</p>
               <ul className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 mt-2 text-sm">
-                {speciesClasses.map((c) => (
+                {SPECIES_CLASS_OPTIONS.map((c) => (
                   <li key={c}>
                     <label htmlFor={c} className="cursor-pointer flex items-center gap-2 capitalize whitespace-nowrap">
                       <input type="radio" id={c} value={c} checked={c === sanitizedClass} onChange={handleChange} className="radio" />
@@ -236,13 +240,18 @@ export default function Filters({
                   </li>
                 ))}
               </ul>
-              <label htmlFor="endemic" className="mt-6 cursor-pointer flex items-center gap-2 text-sm">
+              <label
+                htmlFor="endemic"
+                className={`mt-6 flex items-center gap-2 text-sm ${isWorld ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
+                title={isWorld ? 'Endemic filter only applies when a specific region is selected' : undefined}
+              >
                 <input
                   type="checkbox"
                   id="endemic"
                   className="checkbox relative bottom-[1px]"
                   onChange={() => setFilterEndemic((current) => !current)}
                   checked={filterEndemic}
+                  disabled={isWorld}
                 />
                 {' '}Only display endemic species
               </label>

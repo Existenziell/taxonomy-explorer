@@ -2,16 +2,12 @@ import { NextRequest } from 'next/server'
 import {
   SPECIES_COUNTS_BASE_URL,
   DEFAULT_PLACE_ID,
-  MIN_SEARCH_LENGTH,
+  getEffectiveSearch,
+  VALID_ORDER,
+  VALID_TAXON,
 } from '@/lib/constants'
 import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption } from '@/types'
 import { sortSpeciesResults } from '@/lib/sortSpeciesResults'
-
-const VALID_ORDER: OrderByOption[] = ['count_desc', 'count_asc', 'name_asc', 'name_desc']
-const VALID_TAXON = new Set([
-  'all', 'actinopterygii', 'animalia', 'amphibia', 'arachnida', 'aves', 'chromista',
-  'fungi', 'insecta', 'mammalia', 'mollusca', 'reptilia', 'plantae', 'protozoa', 'unknown',
-])
 
 const EXPORT_PER_PAGE = 200
 const MAX_PAGES = 100
@@ -30,7 +26,7 @@ export async function GET (request: NextRequest) {
       : DEFAULT_PLACE_ID
 
   const search = searchParams.get('q') ?? ''
-  const effectiveSearch = search.length >= MIN_SEARCH_LENGTH ? search : ''
+  const effectiveSearch = getEffectiveSearch(search)
 
   const orderRaw = searchParams.get('order')
   const orderBy: OrderByOption =

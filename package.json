@@ -13,7 +13,6 @@
     "test:watch": "vitest",
     "all": "concurrently \"npm run lint\" \"npm run test\" \"npm run build\"",
     "generate:theme": "node scripts/generate-theme-css.js"
-
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",
@@ -22,7 +21,6 @@
     "nextjs-toploader": "^3.9.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-spinners": "^0.15.0",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

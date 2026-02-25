@@ -15,6 +15,7 @@ describe('downloadTsv', () => {
     const fakeAnchor = {
       href: '',
       download: '',
+      style: { display: '' },
       click: clickSpy,
     } as unknown as HTMLAnchorElement
     createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {

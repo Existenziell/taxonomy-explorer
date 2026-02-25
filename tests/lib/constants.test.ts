@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   DEFAULT_PER_PAGE,
   MIN_SEARCH_LENGTH,
+  getEffectiveSearch,
   SPECIES_COUNTS_BASE_URL,
   PLACES_AUTOCOMPLETE_BASE_URL,
   PAGE_PARAM,
@@ -11,12 +12,31 @@ import {
   DEFAULT_PLACE_ID,
   FALLBACK_REGIONS,
   SCROLL_TO_TOP_THRESHOLD,
+  VALID_ORDER,
+  SPECIES_CLASS_OPTIONS,
+  VALID_TAXON,
 } from '@/lib/constants'
 
 describe('constants', () => {
   it('exports pagination/search defaults', () => {
-    expect(DEFAULT_PER_PAGE).toBe(20)
+    expect(DEFAULT_PER_PAGE).toBe(50)
     expect(MIN_SEARCH_LENGTH).toBe(2)
+  })
+
+  it('getEffectiveSearch returns search when length >= MIN_SEARCH_LENGTH', () => {
+    expect(getEffectiveSearch('ab')).toBe('ab')
+    expect(getEffectiveSearch('hello')).toBe('hello')
+  })
+
+  it('getEffectiveSearch returns empty string when too short', () => {
+    expect(getEffectiveSearch('')).toBe('')
+    expect(getEffectiveSearch('a')).toBe('')
+  })
+
+  it('exports VALID_ORDER and taxon options', () => {
+    expect(VALID_ORDER).toContain('count_desc')
+    expect(SPECIES_CLASS_OPTIONS).toContain('all')
+    expect(VALID_TAXON.has('aves')).toBe(true)
   })
 
   it('exports API base URLs', () => {

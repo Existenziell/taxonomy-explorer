@@ -1,4 +1,5 @@
 import type { SpeciesCountResult } from '@/types'
+import downloadBlob from '@/lib/downloadBlob'
 import { getExportRows } from '@/lib/exportSpeciesData'
 
 function escapeCsvField (value: string): string {
@@ -12,14 +13,7 @@ const downloadCsv = (species: SpeciesCountResult[]): void => {
     .map((row) => row.map(escapeCsvField).join(','))
     .join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = `species-export-${Date.now()}.csv`
-  document.body.appendChild(anchor)
-  anchor.click()
-  document.body.removeChild(anchor)
-  URL.revokeObjectURL(url)
+  downloadBlob(blob, `species-export-${Date.now()}.csv`, 'text/csv;charset=utf-8')
 }
 
 export default downloadCsv

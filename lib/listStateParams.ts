@@ -7,13 +7,9 @@ import {
   ORDER_PARAM,
   ENDEMIC_PARAM,
   TAXON_PARAM,
+  VALID_ORDER,
+  VALID_TAXON,
 } from '@/lib/constants'
-
-const VALID_ORDER: OrderByOption[] = ['count_desc', 'count_asc', 'name_asc', 'name_desc']
-const VALID_TAXON = new Set([
-  'all', 'actinopterygii', 'animalia', 'amphibia', 'arachnida', 'aves', 'chromista',
-  'fungi', 'insecta', 'mammalia', 'mollusca', 'reptilia', 'plantae', 'protozoa', 'unknown',
-])
 
 export interface ListStateParams {
   placeId: number

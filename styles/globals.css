@@ -70,6 +70,22 @@ Style Sheet for Taxonomy Explorer
   .overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent;
   }
+
+  /* Loading spinner – CSS-only, uses --color-cta */
+  .spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--color-level-4);
+    border-top-color: var(--color-cta);
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s linear infinite;
+  }
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ==========================================================================

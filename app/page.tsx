@@ -10,15 +10,15 @@ import { useSearchParams } from 'next/navigation'
 import useScrollToTop from '@/hooks/useScrollToTop'
 import { useQuery } from '@tanstack/react-query'
 import fetchApi from '@/lib/fetchApi'
-import { SyncLoader } from 'react-spinners'
 import { DownloadIcon } from '@/components/Icons'
+import QueryStatus from '@/components/QueryStatus'
 import Arrow from '@/components/Arrow'
 import Filters from '@/components/Filters'
 import Search from '@/components/Search'
 import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult, GeoResponse } from '@/types'
 import {
   DEFAULT_PER_PAGE,
-  MIN_SEARCH_LENGTH,
+  getEffectiveSearch,
   SPECIES_COUNTS_BASE_URL,
   SCROLL_TO_TOP_THRESHOLD,
   DEFAULT_PLACE_ID,
@@ -134,7 +134,7 @@ function HomePageContent () {
     return () => { cancelled = true }
   }, [placeId, placeDisplayName])
 
-  const effectiveSearch = search.length >= MIN_SEARCH_LENGTH ? search : ''
+  const effectiveSearch = getEffectiveSearch(search)
 
   const speciesCountsUrl = useMemo(() => {
     const base = `${SPECIES_COUNTS_BASE_URL}?place_id=${placeId}&locale=en`
@@ -164,7 +164,7 @@ function HomePageContent () {
     return sortSpeciesResults(results, orderBy)
   }, [data?.results, orderBy])
 
-  if (status === 'error') return <p>{status}</p>
+  if (status === 'error') return <QueryStatus status="error" />
 
   return (
     <>
@@ -211,11 +211,7 @@ function HomePageContent () {
         />
 
         {status === 'pending'
-          ? (
-              <div className="mt-8">
-                <SyncLoader size={10} color="var(--color-cta)" />
-              </div>
-            )
+          ? <QueryStatus status="pending" pendingClassName="mt-8" />
           : (
             <>
               <p className="text-xl text-secondary mt-2 mb-2">
@@ -303,7 +299,7 @@ export default function HomePage () {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center w-full pb-16 mt-8">
-        <SyncLoader size={10} color="var(--color-cta)" />
+        <div className="spinner" role="status" aria-label="Loading" />
       </div>
     }>
       <HomePageContent />

@@ -2,8 +2,8 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { SyncLoader } from 'react-spinners'
 import { useEffect, useState } from 'react'
+import QueryStatus from '@/components/QueryStatus'
 import Image from '@/components/Image'
 import translateStatusName from '@/lib/translateStatusName'
 import AppLink from '@/components/AppLink'
@@ -59,13 +59,9 @@ export default function SpeciesPage() {
     }
   }, [fullscreenImageUrl])
 
-  if (status === 'error') return <p>{status}</p>
+  if (status === 'error') return <QueryStatus status="error" />
   if (status === 'pending' || taxon == null) {
-    return (
-      <div className="mx-auto w-max mt-16">
-        <SyncLoader size={10} color="var(--color-cta)" />
-      </div>
-    )
+    return <QueryStatus status="pending" pendingClassName="mx-auto w-max mt-16" />
   }
 
   const {

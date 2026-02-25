@@ -5,7 +5,7 @@ import type { TaxonConservationStatusLike } from '@/types'
  * Aligns with standard categories: NE, DD, LC, NT, VU, EN, CR, EW, EX.
  * Exact numeric values may vary by API; adjust if real responses differ.
  */
-export const IUCN_CODE_TO_LABEL: Record<number, string> = {
+const IUCN_CODE_TO_LABEL: Record<number, string> = {
   0: 'Not Evaluated',
   1: 'Data Deficient',
   2: 'Least Concern',

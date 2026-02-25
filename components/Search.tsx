@@ -16,7 +16,7 @@ export default function Search ({ search, setSearch }: SearchProps) {
         autoCorrect="off"
         spellCheck={false}
         autoCapitalize="none"
-        className="w-full pl-3 pr-9 py-2 rounded border border-cta bg-level-1 text-sm focus:outline-none focus:ring-2 focus:ring-cta"
+        className="input input-search w-full"
       />
       {search.length > 0 && (
         <button
