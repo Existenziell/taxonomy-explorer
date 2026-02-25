@@ -33,6 +33,12 @@ export const ORDER_PARAM = 'order'
 export const ENDEMIC_PARAM = 'endemic'
 export const TAXON_PARAM = 'taxon'
 
+/** Place ID for world-wide observations (iNaturalist Earth) */
+export const WORLD_PLACE_ID = 1
+
+/** Display name for world place */
+export const WORLD_PLACE_DISPLAY_NAME = 'World'
+
 /** Default place (Svalbard) when none is selected or geo unavailable */
 export const DEFAULT_PLACE_ID = 7354
 

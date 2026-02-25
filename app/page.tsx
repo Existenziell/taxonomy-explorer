@@ -23,6 +23,8 @@ import {
   SCROLL_TO_TOP_THRESHOLD,
   DEFAULT_PLACE_ID,
   DEFAULT_PLACE_DISPLAY_NAME,
+  WORLD_PLACE_ID,
+  WORLD_PLACE_DISPLAY_NAME,
   FALLBACK_REGIONS,
   INATURALIST_PLACES_BY_ID,
 } from '@/lib/constants'
@@ -30,6 +32,7 @@ import { parseListStateFromSearchParams, buildListStateSearchParams } from '@/li
 import { sortSpeciesResults } from '@/lib/sortSpeciesResults'
 
 function getPlaceDisplayName (placeId: number): string {
+  if (placeId === WORLD_PLACE_ID) return WORLD_PLACE_DISPLAY_NAME
   if (placeId === DEFAULT_PLACE_ID) return DEFAULT_PLACE_DISPLAY_NAME
   return FALLBACK_REGIONS.find((r) => r.id === placeId)?.name ?? `Place ${placeId}`
 }

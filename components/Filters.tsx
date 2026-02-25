@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { FiltersProps, PlaceAutocompleteResult, OrderByOption, GeoResponse, PlacesAutocompleteResponse } from '@/types'
-import { FALLBACK_REGIONS, PLACES_AUTOCOMPLETE_BASE_URL } from '@/lib/constants'
+import { FALLBACK_REGIONS, PLACES_AUTOCOMPLETE_BASE_URL, WORLD_PLACE_ID, WORLD_PLACE_DISPLAY_NAME } from '@/lib/constants'
 import fetchApi from '@/lib/fetchApi'
 import { ChevronDown, ChevronUp } from '@/components/Icons'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
@@ -134,6 +134,16 @@ export default function Filters({
         {locationExpanded && (
           <section className="pt-4">
             <div className="flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => onPlaceSelect(WORLD_PLACE_ID, WORLD_PLACE_DISPLAY_NAME)}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${placeId === WORLD_PLACE_ID
+                    ? 'bg-cta text-cta-contrast border-cta'
+                    : 'bg-level-3 border-level-4 hover:border-cta'
+                  }`}
+              >
+                {WORLD_PLACE_DISPLAY_NAME}
+              </button>
               {!geoLoaded && (
                 <span className="text-sm text-secondary">Detecting your region…</span>
               )}
