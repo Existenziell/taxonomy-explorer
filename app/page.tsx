@@ -15,7 +15,7 @@ import QueryStatus from '@/components/QueryStatus'
 import Arrow from '@/components/Arrow'
 import Filters from '@/components/Filters'
 import Search from '@/components/Search'
-import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult, GeoResponse } from '@/types'
+import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption, PlaceByIdResult, GeoResponse, TaxaResponse } from '@/types'
 import {
   DEFAULT_PER_PAGE,
   getEffectiveSearch,
@@ -30,6 +30,7 @@ import {
 } from '@/lib/constants'
 import { parseListStateFromSearchParams, buildListStateSearchParams } from '@/lib/listStateParams'
 import { sortSpeciesResults } from '@/lib/sortSpeciesResults'
+import { isTaxonThreatened } from '@/lib/conservationStatus'
 
 function getPlaceDisplayName (placeId: number): string {
   if (placeId === WORLD_PLACE_ID) return WORLD_PLACE_DISPLAY_NAME
@@ -49,7 +50,9 @@ function HomePageContent () {
   const [page, setPage] = useState(initial.page)
   const [search, setSearch] = useState(initial.search)
   const [filterSpeciesClass, setFilterSpeciesClass] = useState(initial.filterSpeciesClass)
+  const [filterTaxonId, setFilterTaxonId] = useState<number | null>(initial.filterTaxonId)
   const [filterEndemic, setFilterEndemic] = useState(initial.filterEndemic)
+  const [filterThreatened, setFilterThreatened] = useState(initial.filterThreatened)
   const [orderBy, setOrderBy] = useState<OrderByOption>(initial.orderBy)
   const { showButton: showScrollToTop, scrollToTop } = useScrollToTop(SCROLL_TO_TOP_THRESHOLD)
   const hasAttemptedGeoRef = useRef(false)
@@ -62,13 +65,15 @@ function HomePageContent () {
       search,
       orderBy,
       filterEndemic,
+      filterThreatened,
       filterSpeciesClass,
+      filterTaxonId,
     })
     const url = `${window.location.pathname}${queryString}`
     if (window.location.pathname + window.location.search !== url) {
       window.history.replaceState(null, '', url)
     }
-  }, [placeId, page, search, orderBy, filterEndemic, filterSpeciesClass])
+  }, [placeId, page, search, orderBy, filterEndemic, filterThreatened, filterSpeciesClass, filterTaxonId])
 
   const setSearchAndResetPage = useCallback((value: SetStateAction<string>) => {
     setSearch(value)
@@ -107,15 +112,27 @@ function HomePageContent () {
     setPage(1)
   }, [])
 
+  const setFilterThreatenedAndResetPage = useCallback((value: SetStateAction<boolean>) => {
+    setFilterThreatened(value)
+    setPage(1)
+  }, [])
+
   const setFilterSpeciesClassAndResetPage = useCallback((value: SetStateAction<string>) => {
     setFilterSpeciesClass(value)
+    setPage(1)
+  }, [])
+
+  const setFilterTaxonIdAndResetPage = useCallback((value: SetStateAction<number | null>) => {
+    setFilterTaxonId(value)
     setPage(1)
   }, [])
 
   const resetFiltersAndOrder = useCallback(() => {
     setOrderBy('count_desc')
     setFilterEndemic(false)
+    setFilterThreatened(false)
     setFilterSpeciesClass('')
+    setFilterTaxonId(null)
     setPage(1)
   }, [])
 
@@ -138,14 +155,15 @@ function HomePageContent () {
 
   const speciesCountsUrl = useMemo(() => {
     const base = `${SPECIES_COUNTS_BASE_URL}?place_id=${placeId}&locale=en`
-    const params = `page=${page}&per_page=${DEFAULT_PER_PAGE}&endemic=${filterEndemic}&iconic_taxa=${filterSpeciesClass}`
+    let params = `page=${page}&per_page=${DEFAULT_PER_PAGE}&endemic=${filterEndemic}&threatened=${filterThreatened}&iconic_taxa=${filterSpeciesClass}`
+    if (filterTaxonId != null) params += `&taxon_id=${filterTaxonId}`
     return effectiveSearch.length > 0
       ? `${base}&${params}&q=${encodeURIComponent(effectiveSearch)}`
       : `${base}&${params}`
-  }, [placeId, page, filterEndemic, filterSpeciesClass, effectiveSearch])
+  }, [placeId, page, filterEndemic, filterThreatened, filterSpeciesClass, filterTaxonId, effectiveSearch])
 
   const { status, data } = useQuery<SpeciesCountsResponse>({
-    queryKey: ['species', placeId, page, effectiveSearch, filterEndemic, filterSpeciesClass],
+    queryKey: ['species', placeId, page, effectiveSearch, filterEndemic, filterThreatened, filterSpeciesClass, filterTaxonId],
     queryFn: () => fetchApi<SpeciesCountsResponse>(speciesCountsUrl),
   })
 
@@ -161,8 +179,66 @@ function HomePageContent () {
   const sortedResults = useMemo((): SpeciesCountResult[] | undefined => {
     const results = data?.results
     if (results == null) return undefined
-    return sortSpeciesResults(results, orderBy)
-  }, [data?.results, orderBy])
+    const filtered =
+      filterThreatened
+        ? results.filter((r) => isTaxonThreatened(r.taxon))
+        : results
+    return sortSpeciesResults(filtered, orderBy)
+  }, [data?.results, filterThreatened, orderBy])
+
+  const { data: filterTaxonData } = useQuery<TaxaResponse>({
+    queryKey: ['taxon', filterTaxonId],
+    queryFn: () => fetchApi<TaxaResponse>(`https://api.inaturalist.org/v1/taxa/${filterTaxonId}`),
+    enabled: filterTaxonId != null,
+  })
+  const filterTaxon = filterTaxonData?.results?.[0]
+  const filterTaxonName =
+    filterTaxon?.preferred_common_name ??
+    filterTaxon?.name ??
+    (filterTaxonId != null ? `ID ${filterTaxonId}` : null)
+  const filterTaxonRank = filterTaxon?.rank
+  const filterTaxonRankLabel =
+    filterTaxonRank === 'kingdom'
+      ? 'Kingdom'
+      : filterTaxonRank === 'phylum'
+        ? 'Phylum'
+        : filterTaxonRank === 'family'
+          ? 'Family'
+          : filterTaxonRank != null
+            ? filterTaxonRank.charAt(0).toUpperCase() + filterTaxonRank.slice(1)
+            : 'Taxon'
+
+  const filterSummaryParts = useMemo(() => {
+    const orderLabels: Record<OrderByOption, string> = {
+      count_desc: 'Count (high to low)',
+      count_asc: 'Count (low to high)',
+      name_asc: 'Name (A–Z)',
+      name_desc: 'Name (Z–A)',
+    }
+    const parts: string[] = []
+    parts.push(`Place: ${placeDisplayName}`)
+    if (filterSpeciesClass !== '') {
+      parts.push(`Class: ${filterSpeciesClass.charAt(0).toUpperCase() + filterSpeciesClass.slice(1)}`)
+    }
+    if (filterEndemic) parts.push('Endemic only')
+    if (filterThreatened) parts.push('Endangered only')
+    if (filterTaxonId != null && filterTaxonName != null) {
+      parts.push(`${filterTaxonRankLabel}: ${filterTaxonName}`)
+    }
+    parts.push(`Order: ${orderLabels[orderBy]}`)
+    if (effectiveSearch.length > 0) parts.push(`Search: "${effectiveSearch}"`)
+    return parts
+  }, [
+    placeDisplayName,
+    filterSpeciesClass,
+    filterEndemic,
+    filterThreatened,
+    filterTaxonId,
+    filterTaxonName,
+    filterTaxonRankLabel,
+    orderBy,
+    effectiveSearch,
+  ])
 
   if (status === 'error') return <QueryStatus status="error" />
 
@@ -192,7 +268,9 @@ function HomePageContent () {
             placeId,
             search,
             filterEndemic,
+            filterThreatened,
             filterSpeciesClass,
+            filterTaxonId,
             orderBy,
           }}
         />
@@ -205,8 +283,12 @@ function HomePageContent () {
           setOrderBy={setOrderByAndResetPage}
           filterEndemic={filterEndemic}
           setFilterEndemic={setFilterEndemicAndResetPage}
+          filterThreatened={filterThreatened}
+          setFilterThreatened={setFilterThreatenedAndResetPage}
           filterSpeciesClass={filterSpeciesClass}
           setFilterSpeciesClass={setFilterSpeciesClassAndResetPage}
+          filterTaxonId={filterTaxonId}
+          setFilterTaxonId={setFilterTaxonIdAndResetPage}
           onResetFilters={resetFiltersAndOrder}
         />
 
@@ -214,6 +296,16 @@ function HomePageContent () {
           ? <QueryStatus status="pending" pendingClassName="mt-8" />
           : (
             <>
+              {filterSummaryParts.length > 0 && (
+                <p className="text-sm text-secondary mt-2 mb-1 flex flex-wrap gap-x-2 gap-y-1 items-baseline">
+                  {filterSummaryParts.map((part, i) => (
+                    <span key={i}>
+                      {i > 0 && <span className="text-level-5 mx-1" aria-hidden="true">·</span>}
+                      {part}
+                    </span>
+                  ))}
+                </p>
+              )}
               <p className="text-xl text-secondary mt-2 mb-2">
                 {data != null && !('error' in data) && data.total_results != null
                   ? `${data.total_results.toLocaleString()} species`

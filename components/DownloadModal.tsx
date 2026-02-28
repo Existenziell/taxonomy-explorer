@@ -14,7 +14,9 @@ export interface ExportParams {
   placeId: number
   search: string
   filterEndemic: boolean
+  filterThreatened: boolean
   filterSpeciesClass: string
+  filterTaxonId: number | null
   orderBy: OrderByOption
 }
 
@@ -37,7 +39,9 @@ function buildExportUrl (params: ExportParams): string {
   q.set('place_id', String(params.placeId))
   if (params.search) q.set('q', params.search)
   q.set('endemic', String(params.filterEndemic))
+  q.set('threatened', String(params.filterThreatened))
   if (params.filterSpeciesClass) q.set('taxon', params.filterSpeciesClass)
+  if (params.filterTaxonId != null) q.set('taxon_id', String(params.filterTaxonId))
   q.set('order', params.orderBy)
   return `/api/export?${q.toString()}`
 }

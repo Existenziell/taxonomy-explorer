@@ -107,7 +107,9 @@ export interface ProvidersProps {
 
 export type SetPage = Dispatch<SetStateAction<number>>
 export type SetFilterEndemic = Dispatch<SetStateAction<boolean>>
+export type SetFilterThreatened = Dispatch<SetStateAction<boolean>>
 export type SetFilterSpeciesClass = Dispatch<SetStateAction<string>>
+export type SetFilterTaxonId = Dispatch<SetStateAction<number | null>>
 export type SetSearch = Dispatch<SetStateAction<string>>
 
 /** Order for species list: count (API default), or client-side sort by name */
@@ -140,9 +142,20 @@ export interface FiltersProps {
   setOrderBy: Dispatch<SetStateAction<OrderByOption>>
   filterEndemic: boolean
   setFilterEndemic: SetFilterEndemic
+  filterThreatened: boolean
+  setFilterThreatened: SetFilterThreatened
   filterSpeciesClass: string
   setFilterSpeciesClass: SetFilterSpeciesClass
+  filterTaxonId: number | null
+  setFilterTaxonId: SetFilterTaxonId
   onResetFilters: () => void
+}
+
+/** Taxon option for filter dropdowns (id + display name, optional rank) */
+export interface TaxonOption {
+  id: number
+  name: string
+  rank?: string
 }
 
 export interface SearchProps {

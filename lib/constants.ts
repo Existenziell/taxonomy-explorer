@@ -35,7 +35,9 @@ export const PAGE_PARAM = 'page'
 export const SEARCH_PARAM = 'q'
 export const ORDER_PARAM = 'order'
 export const ENDEMIC_PARAM = 'endemic'
+export const THREATENED_PARAM = 'threatened'
 export const TAXON_PARAM = 'taxon'
+export const TAXON_ID_PARAM = 'taxon_id'
 
 /** Place ID for world-wide observations (iNaturalist Earth) */
 export const WORLD_PLACE_ID = 1
@@ -71,3 +73,16 @@ export const SPECIES_CLASS_OPTIONS = [
 
 /** Set of valid taxon/species class values for validation. */
 export const VALID_TAXON = new Set<string>(SPECIES_CLASS_OPTIONS)
+
+/** Base URL for iNaturalist taxa (search and autocomplete). */
+export const TAXA_BASE_URL = 'https://api.inaturalist.org/v1/taxa'
+export const TAXA_AUTOCOMPLETE_URL = 'https://api.inaturalist.org/v1/taxa/autocomplete'
+
+/** Predefined kingdom options for filter (iNaturalist taxon IDs). */
+export const KINGDOM_OPTIONS: { id: number; name: string }[] = [
+  { id: 1, name: 'Animalia' },
+  { id: 47126, name: 'Plantae' },
+  { id: 47170, name: 'Fungi' },
+  { id: 47644, name: 'Protozoa' },
+  { id: 48222, name: 'Chromista' },
+]

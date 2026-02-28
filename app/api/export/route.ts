@@ -8,6 +8,7 @@ import {
 } from '@/lib/constants'
 import type { SpeciesCountsResponse, SpeciesCountResult, OrderByOption } from '@/types'
 import { sortSpeciesResults } from '@/lib/sortSpeciesResults'
+import { isTaxonThreatened } from '@/lib/conservationStatus'
 
 const EXPORT_PER_PAGE = 200
 const MAX_PAGES = 100
@@ -35,6 +36,7 @@ export async function GET (request: NextRequest) {
       : 'count_desc'
 
   const endemic = searchParams.get('endemic') === 'true'
+  const threatened = searchParams.get('threatened') === 'true'
 
   const taxonRaw = searchParams.get('taxon')
   const iconicTaxa =
@@ -42,9 +44,16 @@ export async function GET (request: NextRequest) {
       ? (taxonRaw === 'all' ? '' : taxonRaw)
       : ''
 
-  const baseUrl =
+  const taxonIdRaw = searchParams.get('taxon_id')
+  const taxonId =
+    taxonIdRaw != null && /^\d+$/.test(taxonIdRaw)
+      ? Math.max(1, parseInt(taxonIdRaw, 10))
+      : null
+
+  let baseUrl =
     `${SPECIES_COUNTS_BASE_URL}?place_id=${placeId}&locale=en` +
-    `&per_page=${EXPORT_PER_PAGE}&endemic=${endemic}&iconic_taxa=${iconicTaxa}`
+    `&per_page=${EXPORT_PER_PAGE}&endemic=${endemic}&threatened=${threatened}&iconic_taxa=${iconicTaxa}`
+  if (taxonId != null) baseUrl += `&taxon_id=${taxonId}`
 
   const allResults: SpeciesCountResult[] = []
   let totalResults = 0
@@ -76,11 +85,14 @@ export async function GET (request: NextRequest) {
       page += 1
     }
 
-    const sorted = sortSpeciesResults(allResults, orderBy)
+    const toSort = threatened
+      ? allResults.filter((r) => isTaxonThreatened(r.taxon))
+      : allResults
+    const sorted = sortSpeciesResults(toSort, orderBy)
 
     return Response.json({
       results: sorted,
-      total_results: totalResults,
+      total_results: threatened ? sorted.length : totalResults,
     })
   } catch (err) {
     return Response.json(

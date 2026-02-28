@@ -9,7 +9,7 @@ import translateStatusName from '@/lib/translateStatusName'
 import AppLink from '@/components/AppLink'
 import Arrow from '@/components/Arrow'
 import fetchApi from '@/lib/fetchApi'
-import { getIucnFromStatuses } from '@/lib/iucn'
+import { getIucnFromStatuses, getPrimaryStatusNameFromStatuses } from '@/lib/iucn'
 import { SITE_TITLE } from '@/lib/metadata'
 import type { TaxaResponse, Taxon } from '@/types'
 import capitalize from '@/lib/capitalize'
@@ -89,6 +89,15 @@ export default function SpeciesPage() {
     establishmentLabel(taxon) != null
   const establishment = establishmentLabel(taxon)
   const iucn = getIucnFromStatuses(conservation_statuses ?? null)
+  const statusFromList =
+    conservation_status?.status_name != null && conservation_status.status_name !== ''
+      ? conservation_status.status_name
+      : getPrimaryStatusNameFromStatuses(conservation_statuses ?? null)
+  const statusDisplay =
+    statusFromList != null
+      ? translateStatusName(statusFromList)
+      : (iucn != null ? iucn.label : 'No data')
+  const hasStatusDisplay = statusDisplay !== 'No data'
 
   const openFullscreen = (url: string) => setFullscreenImageUrl(url)
   const closeFullscreen = () => setFullscreenImageUrl(null)
@@ -165,12 +174,14 @@ export default function SpeciesPage() {
                     )}
                     <p className="text-sm">
                       Status:{' '}
-                      {conservation_status?.status_name != null && conservation_status.status_name !== ''
-                        ? translateStatusName(conservation_status.status_name)
-                        : 'No data'}
+                      {hasStatusDisplay ? (
+                        <span className="font-bold">{statusDisplay}</span>
+                      ) : (
+                        statusDisplay
+                      )}
                     </p>
                     {iucn != null && (
-                      <p className="text-sm mt-1">IUCN: {iucn.label}</p>
+                      <p className="text-sm mt-1">IUCN: <span className="font-bold">{iucn.label}</span></p>
                     )}
                     {conservation_statuses != null && conservation_statuses.length > 0 && (
                       <div className="mt-2">

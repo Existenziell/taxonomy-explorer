@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { iucnCodeToLabel, getIucnFromStatuses } from '@/lib/iucn'
+import { iucnCodeToLabel, getIucnFromStatuses, getPrimaryStatusNameFromStatuses } from '@/lib/iucn'
 
 describe('iucnCodeToLabel', () => {
-  it('returns label for known codes', () => {
+  it('returns label for iNaturalist API codes', () => {
     expect(iucnCodeToLabel(0)).toBe('Not Evaluated')
-    expect(iucnCodeToLabel(2)).toBe('Least Concern')
-    expect(iucnCodeToLabel(5)).toBe('Endangered')
-    expect(iucnCodeToLabel(8)).toBe('Extinct')
+    expect(iucnCodeToLabel(10)).toBe('Least Concern')
+    expect(iucnCodeToLabel(20)).toBe('Near Threatened')
+    expect(iucnCodeToLabel(30)).toBe('Vulnerable')
+    expect(iucnCodeToLabel(40)).toBe('Endangered')
+    expect(iucnCodeToLabel(70)).toBe('Extinct')
   })
 
   it('returns undefined for unknown code', () => {
@@ -15,9 +17,9 @@ describe('iucnCodeToLabel', () => {
 })
 
 describe('getIucnFromStatuses', () => {
-  it('returns first IUCN code and label from statuses', () => {
-    const statuses = [{ iucn: 5 }, { iucn: 2 }]
-    expect(getIucnFromStatuses(statuses)).toEqual({ code: 5, label: 'Endangered' })
+  it('returns most threatened IUCN (highest code) from statuses', () => {
+    const statuses = [{ iucn: 10 }, { iucn: 30 }]
+    expect(getIucnFromStatuses(statuses)).toEqual({ code: 30, label: 'Vulnerable' })
   })
 
   it('returns null for null or undefined', () => {
@@ -29,8 +31,23 @@ describe('getIucnFromStatuses', () => {
     expect(getIucnFromStatuses([])).toBeNull()
   })
 
-  it('skips statuses without iucn and returns first valid', () => {
-    const statuses = [{}, { iucn: 3 }]
-    expect(getIucnFromStatuses(statuses)).toEqual({ code: 3, label: 'Near Threatened' })
+  it('skips statuses without valid label and returns best', () => {
+    const statuses = [{ iucn: 30 }, { iucn: 10 }]
+    expect(getIucnFromStatuses(statuses)).toEqual({ code: 30, label: 'Vulnerable' })
+  })
+})
+
+describe('getPrimaryStatusNameFromStatuses', () => {
+  it('returns status_name from most threatened status', () => {
+    const statuses = [
+      { iucn: 10, status_name: 'Least Concern' },
+      { iucn: 30, status_name: 'Vulnerable' },
+    ]
+    expect(getPrimaryStatusNameFromStatuses(statuses)).toBe('Vulnerable')
+  })
+
+  it('returns null for empty or null', () => {
+    expect(getPrimaryStatusNameFromStatuses(null)).toBeNull()
+    expect(getPrimaryStatusNameFromStatuses([])).toBeNull()
   })
 })

@@ -1,14 +1,43 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { FiltersProps, PlaceAutocompleteResult, OrderByOption, GeoResponse, PlacesAutocompleteResponse } from '@/types'
-import { FALLBACK_REGIONS, PLACES_AUTOCOMPLETE_BASE_URL, SPECIES_CLASS_OPTIONS, WORLD_PLACE_ID, WORLD_PLACE_DISPLAY_NAME } from '@/lib/constants'
+import {
+  FALLBACK_REGIONS,
+  PLACES_AUTOCOMPLETE_BASE_URL,
+  SPECIES_CLASS_OPTIONS,
+  WORLD_PLACE_ID,
+  WORLD_PLACE_DISPLAY_NAME,
+  TAXA_BASE_URL,
+  KINGDOM_OPTIONS,
+} from '@/lib/constants'
 import fetchApi from '@/lib/fetchApi'
 import { ChevronDown, ChevronUp } from '@/components/Icons'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import type { TaxaResponse } from '@/types'
 
 const PLACE_SEARCH_MIN_LENGTH = 2
 const PLACE_SEARCH_DEBOUNCE_MS = 300
+
+/** Capitalize first letter of each word for display labels. */
+function capitalizeWords (s: string): string {
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
+}
+
+/** Format taxon option label: "Latin (English)" when both present, else the one we have; capitalized. */
+function formatTaxonLabel (latinName?: string | null, englishName?: string | null): string {
+  const latin = (latinName ?? '').trim()
+  const english = (englishName ?? '').trim()
+  if (latin && english && latin !== english) {
+    return `${capitalizeWords(latin)} (${capitalizeWords(english)})`
+  }
+  return capitalizeWords(latin || english)
+}
 
 export default function Filters({
   placeId,
@@ -18,8 +47,12 @@ export default function Filters({
   setOrderBy,
   filterEndemic,
   setFilterEndemic,
+  filterThreatened,
+  setFilterThreatened,
   filterSpeciesClass,
   setFilterSpeciesClass,
+  filterTaxonId,
+  setFilterTaxonId,
   onResetFilters,
 }: FiltersProps) {
   const [placeQuery, setPlaceQuery] = useState('')
@@ -34,7 +67,7 @@ export default function Filters({
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   const hasActiveFilters =
-    orderBy !== 'count_desc' || filterEndemic || filterSpeciesClass !== ''
+    orderBy !== 'count_desc' || filterEndemic || filterThreatened || filterSpeciesClass !== '' || filterTaxonId != null
 
   const isWorld = placeId === WORLD_PLACE_ID
 
@@ -111,6 +144,30 @@ export default function Filters({
     setPlaceSuggestions([])
     setPlaceSuggestionsOpen(false)
   }, [onPlaceSelect])
+
+  const { data: phylaData } = useQuery<TaxaResponse>({
+    queryKey: ['taxa', 'phylum'],
+    queryFn: () =>
+      fetchApi<TaxaResponse>(`${TAXA_BASE_URL}?rank=phylum&per_page=100&order_by=observations_count&order=desc`),
+    enabled: filterExpanded,
+  })
+  const phylumOptions: { id: number; displayLabel: string }[] =
+    phylaData?.results?.map((t) => ({
+      id: t.id,
+      displayLabel: formatTaxonLabel(t.name, t.preferred_common_name),
+    })) ?? []
+
+  const { data: familiesData } = useQuery<TaxaResponse>({
+    queryKey: ['taxa', 'family'],
+    queryFn: () =>
+      fetchApi<TaxaResponse>(`${TAXA_BASE_URL}?rank=family&per_page=150&order_by=observations_count&order=desc`),
+    enabled: filterExpanded,
+  })
+  const familyOptions: { id: number; displayLabel: string }[] =
+    familiesData?.results?.map((t) => ({
+      id: t.id,
+      displayLabel: formatTaxonLabel(t.name, t.preferred_common_name),
+    })) ?? []
 
   const sanitizedClass = filterSpeciesClass === '' ? 'all' : filterSpeciesClass
 
@@ -240,9 +297,63 @@ export default function Filters({
                   </li>
                 ))}
               </ul>
+
+              <p className="font-medium mb-1 mt-6">Filter by taxon (Kingdom, Phylum, Family):</p>
+              <div className="flex flex-wrap gap-3 items-center text-sm">
+                <label className="flex items-center gap-2">
+                  <span className="text-secondary">Kingdom</span>
+                  <select
+                    value={filterTaxonId != null && KINGDOM_OPTIONS.some((k) => k.id === filterTaxonId) ? filterTaxonId : ''}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFilterTaxonId(v === '' ? null : parseInt(v, 10))
+                    }}
+                    className="input py-1 pr-6 max-w-[12rem]"
+                  >
+                    <option value="">Any</option>
+                    {KINGDOM_OPTIONS.map((k) => (
+                      <option key={k.id} value={k.id}>{capitalizeWords(k.name)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2">
+                  <span className="text-secondary">Phylum</span>
+                  <select
+                    value={filterTaxonId != null && phylumOptions.some((p) => p.id === filterTaxonId) ? filterTaxonId : ''}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFilterTaxonId(v === '' ? null : parseInt(v, 10))
+                    }}
+                    className="input py-1 pr-6 max-w-[12rem]"
+                  >
+                    <option value="">Any</option>
+                    {phylumOptions.map((p) => (
+                      <option key={p.id} value={p.id}>{p.displayLabel}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2">
+                  <span className="text-secondary">Family</span>
+                  <select
+                    value={filterTaxonId != null && familyOptions.some((f) => f.id === filterTaxonId) ? filterTaxonId : ''}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFilterTaxonId(v === '' ? null : parseInt(v, 10))
+                    }}
+                    className="input py-1 pr-6 max-w-[12rem]"
+                  >
+                    <option value="">Any</option>
+                    {familyOptions.map((f) => (
+                      <option key={f.id} value={f.id}>{f.displayLabel}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
               <label
                 htmlFor="endemic"
-                className={`mt-6 flex items-center gap-2 text-sm ${isWorld ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
+                className={`flex items-center gap-2 text-sm ${isWorld ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
                 title={isWorld ? 'Endemic filter only applies when a specific region is selected' : undefined}
               >
                 <input
@@ -255,6 +366,20 @@ export default function Filters({
                 />
                 {' '}Only display endemic species
               </label>
+              <label
+                htmlFor="threatened"
+                className="flex items-center gap-2 text-sm cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  id="threatened"
+                  className="checkbox relative bottom-[1px]"
+                  onChange={() => setFilterThreatened((current) => !current)}
+                  checked={filterThreatened}
+                />
+                {' '}Only display endangered species
+              </label>
+            </div>
             </section>
             <section className="md:min-w-0 md:flex-1">
               <p className="font-medium mb-1">Order by:</p>

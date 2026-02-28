@@ -11,6 +11,13 @@ export default function Footer () {
         <span className="text-grey dark:text-grey-dark">Taxonomy Explorer</span>
         <span className="hidden text-level-4 sm:inline" aria-hidden>·</span>
         <AppLink
+          href="/nomenclature"
+          className="no-underline text-grey dark:text-grey-dark hover:text-level-6 transition-colors"
+        >
+          Nomenclature
+        </AppLink>
+        <span className="text-level-4" aria-hidden>·</span>
+        <AppLink
           href={GITHUB_URL}
           className="no-underline text-grey dark:text-grey-dark hover:text-level-6 transition-colors"
         >

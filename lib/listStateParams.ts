@@ -6,7 +6,9 @@ import {
   SEARCH_PARAM,
   ORDER_PARAM,
   ENDEMIC_PARAM,
+  THREATENED_PARAM,
   TAXON_PARAM,
+  TAXON_ID_PARAM,
   VALID_ORDER,
   VALID_TAXON,
 } from '@/lib/constants'
@@ -17,7 +19,9 @@ export interface ListStateParams {
   search: string
   orderBy: OrderByOption
   filterEndemic: boolean
+  filterThreatened: boolean
   filterSpeciesClass: string
+  filterTaxonId: number | null
 }
 
 interface SearchParamsLike {
@@ -47,11 +51,20 @@ export function parseListStateFromSearchParams(
   const endemicRaw = searchParams.get(ENDEMIC_PARAM)
   const filterEndemic = endemicRaw === 'true'
 
+  const threatenedRaw = searchParams.get(THREATENED_PARAM)
+  const filterThreatened = threatenedRaw === 'true'
+
   const taxonRaw = searchParams.get(TAXON_PARAM)
   const filterSpeciesClass =
     taxonRaw != null && taxonRaw !== '' && VALID_TAXON.has(taxonRaw)
       ? (taxonRaw === 'all' ? '' : taxonRaw)
       : ''
+
+  const taxonIdRaw = searchParams.get(TAXON_ID_PARAM)
+  const filterTaxonId =
+    taxonIdRaw != null && /^\d+$/.test(taxonIdRaw)
+      ? Math.max(1, parseInt(taxonIdRaw, 10))
+      : null
 
   return {
     placeId,
@@ -59,7 +72,9 @@ export function parseListStateFromSearchParams(
     search,
     orderBy,
     filterEndemic,
+    filterThreatened,
     filterSpeciesClass,
+    filterTaxonId,
   }
 }
 
@@ -70,7 +85,9 @@ export function buildListStateSearchParams(state: ListStateParams): string {
   if (state.search) params.set(SEARCH_PARAM, state.search)
   params.set(ORDER_PARAM, state.orderBy)
   params.set(ENDEMIC_PARAM, String(state.filterEndemic))
+  params.set(THREATENED_PARAM, String(state.filterThreatened))
   if (state.filterSpeciesClass) params.set(TAXON_PARAM, state.filterSpeciesClass)
+  if (state.filterTaxonId != null) params.set(TAXON_ID_PARAM, String(state.filterTaxonId))
   const qs = params.toString()
   return qs ? `?${qs}` : ''
 }
