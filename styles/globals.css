@@ -32,11 +32,11 @@ Style Sheet for Taxonomy Explorer
 
 @layer components {
   .title {
-    @apply text-4xl mb-12;
+    @apply text-3xl md:text-4xl mb-12;
   }
 
   .title-hero {
-    @apply text-6xl text-center mb-12;
+    @apply text-3xl md:text-6xl text-center mb-12;
   }
 
   .subtitle {

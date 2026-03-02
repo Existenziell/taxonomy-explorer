@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import NextTopLoader from 'nextjs-toploader'
 import { ThemeProvider } from '@/contexts/ThemeContext'
-import ThemeToggle from '@/components/themeToggle'
 import type { ProvidersProps } from '@/types'
 
 export default function Providers ({ children }: ProvidersProps) {
@@ -18,7 +17,6 @@ export default function Providers ({ children }: ProvidersProps) {
           height={3}
           showSpinner={false}
         />
-        <ThemeToggle />
         {children}
       </ThemeProvider>
     </QueryClientProvider>

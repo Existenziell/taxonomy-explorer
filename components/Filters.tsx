@@ -299,16 +299,16 @@ export default function Filters({
               </ul>
 
               <p className="font-medium mb-1 mt-6">Filter by taxon (Kingdom, Phylum, Family):</p>
-              <div className="flex flex-wrap gap-3 items-center text-sm">
-                <label className="flex items-center gap-2">
-                  <span className="text-secondary">Kingdom</span>
+              <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-3 md:items-center text-sm w-full">
+                <label className="flex items-center gap-2 w-full md:w-auto min-w-0">
+                  <span className="text-secondary shrink-0 w-20 md:w-auto">Kingdom</span>
                   <select
                     value={filterTaxonId != null && KINGDOM_OPTIONS.some((k) => k.id === filterTaxonId) ? filterTaxonId : ''}
                     onChange={(e) => {
                       const v = e.target.value
                       setFilterTaxonId(v === '' ? null : parseInt(v, 10))
                     }}
-                    className="input py-1 pr-6 max-w-[12rem]"
+                    className="input py-1 pr-6 flex-1 min-w-0 md:max-w-[12rem] md:flex-none"
                   >
                     <option value="">Any</option>
                     {KINGDOM_OPTIONS.map((k) => (
@@ -316,15 +316,15 @@ export default function Filters({
                     ))}
                   </select>
                 </label>
-                <label className="flex items-center gap-2">
-                  <span className="text-secondary">Phylum</span>
+                <label className="flex items-center gap-2 w-full md:w-auto min-w-0">
+                  <span className="text-secondary shrink-0 w-20 md:w-auto">Phylum</span>
                   <select
                     value={filterTaxonId != null && phylumOptions.some((p) => p.id === filterTaxonId) ? filterTaxonId : ''}
                     onChange={(e) => {
                       const v = e.target.value
                       setFilterTaxonId(v === '' ? null : parseInt(v, 10))
                     }}
-                    className="input py-1 pr-6 max-w-[12rem]"
+                    className="input py-1 pr-6 flex-1 min-w-0 md:max-w-[12rem] md:flex-none"
                   >
                     <option value="">Any</option>
                     {phylumOptions.map((p) => (
@@ -332,15 +332,15 @@ export default function Filters({
                     ))}
                   </select>
                 </label>
-                <label className="flex items-center gap-2">
-                  <span className="text-secondary">Family</span>
+                <label className="flex items-center gap-2 w-full md:w-auto min-w-0">
+                  <span className="text-secondary shrink-0 w-20 md:w-auto">Family</span>
                   <select
                     value={filterTaxonId != null && familyOptions.some((f) => f.id === filterTaxonId) ? filterTaxonId : ''}
                     onChange={(e) => {
                       const v = e.target.value
                       setFilterTaxonId(v === '' ? null : parseInt(v, 10))
                     }}
-                    className="input py-1 pr-6 max-w-[12rem]"
+                    className="input py-1 pr-6 flex-1 min-w-0 md:max-w-[12rem] md:flex-none"
                   >
                     <option value="">Any</option>
                     {familyOptions.map((f) => (
@@ -383,15 +383,15 @@ export default function Filters({
             </section>
             <section className="md:min-w-0 md:flex-1">
               <p className="font-medium mb-1">Order by:</p>
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-8 gap-y-2 mt-2 text-sm">
                 {[
                   { value: 'count_desc' as OrderByOption, label: 'Count (high to low)' },
                   { value: 'count_asc' as OrderByOption, label: 'Count (low to high)' },
                   { value: 'name_asc' as OrderByOption, label: 'Name (A–Z)' },
                   { value: 'name_desc' as OrderByOption, label: 'Name (Z–A)' },
                 ].map(({ value, label }) => (
-                  <li key={value}>
-                    <label htmlFor={`order-${value}`} className="cursor-pointer flex items-center gap-2 whitespace-nowrap">
+                  <li key={value} className="min-w-0">
+                    <label htmlFor={`order-${value}`} className="cursor-pointer flex items-center gap-2">
                       <input
                         type="radio"
                         id={`order-${value}`}

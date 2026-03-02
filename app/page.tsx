@@ -247,7 +247,7 @@ function HomePageContent () {
       <h1 className="title title-hero mb-2">Taxonomy Explorer</h1>
       <p className="subtitle text-center mx-auto mb-12">Explore the taxonomy of species in your area</p>
       <div className="flex flex-col items-center w-full p-6 pb-16 bg-level-2 rounded">
-        <div className="toolbar mb-4">
+        <div className="toolbar mb-4 w-full flex justify-between gap-4">
           <Search search={search} setSearch={setSearchAndResetPage} />
           <button
             type="button"
