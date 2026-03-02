@@ -7,7 +7,20 @@ export default function useScrollToTop (threshold = 800): {
   const [showButton, setShowButton] = useState(false)
 
   const scrollToTop = useCallback(() => {
-    window.scroll({ top: 0, left: 0, behavior: 'smooth' })
+    const start = window.scrollY
+    const startTime = performance.now()
+    const duration = 400
+
+    function step (now: number): void {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const ease = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - ((-2 * progress + 2) ** 3) / 2
+      window.scrollTo(0, start * (1 - ease))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    requestAnimationFrame(step)
   }, [])
 
   useEffect(() => {

@@ -13,6 +13,8 @@ import { getIucnFromStatuses, getPrimaryStatusNameFromStatuses } from '@/lib/iuc
 import { SITE_TITLE } from '@/lib/metadata'
 import type { TaxaResponse, Taxon } from '@/types'
 import capitalize from '@/lib/capitalize'
+import useScrollToTop from '@/hooks/useScrollToTop'
+import { SCROLL_TO_TOP_THRESHOLD } from '@/lib/constants'
 
 function establishmentLabel(taxon: Taxon): string | null {
   const preferred = taxon.preferred_establishment_means
@@ -26,6 +28,8 @@ export default function SpeciesPage() {
   const params = useParams()
   const router = useRouter()
   const id = typeof params?.id === 'string' ? params.id : undefined
+
+  const { showButton: showScrollToTop, scrollToTop } = useScrollToTop(SCROLL_TO_TOP_THRESHOLD)
 
   const handleBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -321,6 +325,11 @@ export default function SpeciesPage() {
               )}
             </ul>
           </section>
+          {showScrollToTop && (
+            <div className="flex justify-center mt-16">
+              <Arrow direction="up" onClick={scrollToTop} ariaLabel="Scroll to top" />
+            </div>
+          )}
         </div>
 
         {/* Fullscreen image lightbox */}

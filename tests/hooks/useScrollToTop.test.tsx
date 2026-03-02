@@ -13,21 +13,28 @@ function Wrapper () {
 }
 
 describe('useScrollToTop', () => {
-  const scrollMock = vi.fn()
+  const scrollToMock = vi.fn()
 
   beforeEach(() => {
-    scrollMock.mockClear()
-    window.scroll = scrollMock
+    vi.useFakeTimers()
+    scrollToMock.mockClear()
+    window.scrollTo = scrollToMock
+    Object.defineProperty(window, 'scrollY', { value: 500, configurable: true })
+    let now = 0
+    vi.stubGlobal('performance', { ...performance, now: () => now })
+    vi.stubGlobal('requestAnimationFrame', (cb: (t: number) => void) => {
+      const t = now
+      now += 150
+      setTimeout(() => cb(t), 0)
+      return 0
+    })
   })
 
-  it('returns scrollToTop that calls window.scroll with top 0, left 0, behavior smooth', () => {
+  it('returns scrollToTop that smoothly scrolls to top via requestAnimationFrame', () => {
     render(<Wrapper />)
+    vi.runAllTimers()
 
-    expect(scrollMock).toHaveBeenCalledTimes(1)
-    expect(scrollMock).toHaveBeenCalledWith({
-      top: 0,
-      left: 0,
-      behavior: 'smooth',
-    })
+    expect(scrollToMock).toHaveBeenCalled()
+    expect(scrollToMock).toHaveBeenLastCalledWith(0, 0)
   })
 })

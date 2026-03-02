@@ -298,7 +298,7 @@ export default function Filters({
                 ))}
               </ul>
 
-              <p className="font-medium mb-1 mt-6">Filter by taxon (Kingdom, Phylum, Family):</p>
+              <p className="font-medium mb-2 mt-6">Filter by taxon (Kingdom, Phylum, Family):</p>
               <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-3 md:items-center text-sm w-full">
                 <label className="flex items-center gap-2 w-full md:w-auto min-w-0">
                   <span className="text-secondary shrink-0 w-20 md:w-auto">Kingdom</span>
